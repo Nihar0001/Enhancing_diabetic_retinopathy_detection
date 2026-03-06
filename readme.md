@@ -11,12 +11,14 @@ Start here based on what you need:
 
 | Document | Purpose | Read Time |
 |----------|---------|-----------|
-| **[QUICK_START.md](QUICK_START.md)** | Get running in 5 minutes | ⏱️ 5 min |
+| **[README_SETUP.md](README_SETUP.md)** | 📋 Complete setup guide & getting started | ⏱️ 10 min |
+| **[WORKING_WITHOUT_DATA.md](WORKING_WITHOUT_DATA.md)** | 🎯 Guide for working without real data | 📖 15 min |
+| **[QUICK_START.md](QUICK_START.md)** | ⚡ Get running in 5 minutes | ⏱️ 5 min |
 | **[IMPLEMENTATION_GUIDE.md](IMPLEMENTATION_GUIDE.md)** | Detailed usage & code structure | 📖 20 min |
 | **[CHANGELOG.md](CHANGELOG.md)** | All improvements made (v1.0.0) | 📝 10 min |
-| **[config.py](config.py)** | Configuration reference | 💾 Reference |
+| **[config.py](scripts/config.py)** | Configuration reference | 💾 Reference |
 
-**→ [START HERE: QUICK_START.md](QUICK_START.md)** ⚡
+**→ [START HERE: README_SETUP.md](README_SETUP.md)** ⚡
 
 ---
 
@@ -99,7 +101,63 @@ Enhancing-diabetic-retinopathy-detection/
 
 ---
 
-## 🔧 How to Use
+## 🔧 Quick Start Workflow
+
+### ✅ For Team Members WITHOUT Real Data
+
+```bash
+# 1. Setup (one time)
+git clone <repo>
+cd Enhancing-diabetic-retinopathy-detection
+python -m venv venv
+venv\Scripts\activate
+pip install -r requirements.txt
+
+# 2. Generate demo data for testing
+python generate_demo_data.py
+
+# 3. Test the pipeline
+python train_models.py
+python evaluate_models.py
+
+# 4. View results
+cat outputs/randomforest_report.txt
+
+# 5. When real data arrives, just:
+#    - Place real data files in data/ folder
+#    - Run training again
+python train_models.py
+```
+
+**📖 See [WORKING_WITHOUT_DATA.md](WORKING_WITHOUT_DATA.md) for complete guide!** 
+
+### ✅ For Team Members WITH Real Data
+
+```bash
+# 1. Setup (one time)
+git clone <repo>
+cd Enhancing-diabetic-retinopathy-detection
+python -m venv venv
+venv\Scripts\activate
+pip install -r requirements.txt
+
+# 2. Place your real data files in data/ folder
+#    Required files: X_train.npy, X_test.npy, y_train.npy, y_test.npy
+#    Optional: X_train_scaled.npy, X_test_scaled.npy
+
+# 3. Train models with your real data
+python train_models.py
+
+# 4. Evaluate models
+python evaluate_models.py
+
+# 5. View results
+cat outputs/randomforest_report.txt
+```
+
+---
+
+## 📋 Full Setup Instructions
 
 ### 1. Environment Setup
 ```bash
@@ -109,16 +167,26 @@ source venv/bin/activate  # Linux/Mac
 pip install -r requirements.txt
 ```
 
-### 2. Running the Pipeline
+### 2. Generate Demo Data (if no real data yet)
 ```bash
-jupyter notebook notebooks/hybrid_dr_detection.ipynb
+python generate_demo_data.py
 ```
 
-### 3. Key Functions
+### 3. Train Models (with demo or real data)
+```bash
+python train_models.py
+```
+
+### 4. Evaluate Models
+```bash
+python evaluate_models.py
+```
+
+### 5. Using in Code
 ```python
 from scripts.preprocessing import preprocess_image
 from scripts.feature_extraction import extract_deep_features, extract_lbp, extract_haralick
-from config import PROJECT_ROOT, MODELS_DIR, DATA_DIR
+from scripts.config import PROJECT_ROOT, MODELS_DIR, DATA_DIR
 
 # Use configuration
 model_path = MODELS_DIR / "votingclassifier_model.pkl"

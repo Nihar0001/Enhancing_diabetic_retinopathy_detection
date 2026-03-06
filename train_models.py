@@ -73,16 +73,37 @@ class DRModelTrainer:
         """Load training and testing data."""
         print("[STEP 1] Loading data...")
         try:
-            # Try to load scaled data first
-            if X_TRAIN_SCALED_FILE.exists() and X_TEST_SCALED_FILE.exists():
-                print(f"  Loading scaled data from {X_TRAIN_SCALED_FILE.name}")
-                self.X_train_scaled = np.load(str(X_TRAIN_SCALED_FILE))
-                self.X_test_scaled = np.load(str(X_TEST_SCALED_FILE))
-                self.X_train = np.load(str(X_TRAIN_FILE))
-                self.X_test = np.load(str(X_TEST_FILE))
-            else:
-                raise FileNotFoundError("Scaled data files not found")
+            # Check if data files exist
+            missing_files = []
+            required_files = {
+                'X_train.npy': X_TRAIN_FILE,
+                'X_test.npy': X_TEST_FILE,
+                'y_train.npy': Y_TRAIN_FILE,
+                'y_test.npy': Y_TEST_FILE,
+                'X_train_scaled.npy': X_TRAIN_SCALED_FILE,
+                'X_test_scaled.npy': X_TEST_SCALED_FILE,
+            }
             
+            for name, path in required_files.items():
+                if not path.exists():
+                    missing_files.append(name)
+            
+            if missing_files:
+                print(f"\n  ✗ Missing data files:")
+                for f in missing_files:
+                    print(f"    - {f}")
+                print(f"\n  📋 SOLUTION: Generate demo data first!")
+                print(f"     Run: python generate_demo_data.py")
+                print(f"\n     After that, run this script again.")
+                print(f"\n     📖 See WORKING_WITHOUT_DATA.md for complete guide")
+                return False
+            
+            # Load the data
+            print(f"  Loading scaled data...")
+            self.X_train_scaled = np.load(str(X_TRAIN_SCALED_FILE))
+            self.X_test_scaled = np.load(str(X_TEST_SCALED_FILE))
+            self.X_train = np.load(str(X_TRAIN_FILE))
+            self.X_test = np.load(str(X_TEST_FILE))
             self.y_train = np.load(str(Y_TRAIN_FILE))
             self.y_test = np.load(str(Y_TEST_FILE))
             
@@ -90,18 +111,26 @@ class DRModelTrainer:
             print(f"  ✓ X_test_scaled shape: {self.X_test_scaled.shape}")
             print(f"  ✓ y_train shape: {self.y_train.shape}")
             print(f"  ✓ y_test shape: {self.y_test.shape}")
-            print(f"  ✓ Unique classes: {np.unique(self.y_test)}")
+            print(f"  ✓ Unique classes in y_test: {np.unique(self.y_test)}")
             
             return True
         
-        except FileNotFoundError as e:
-            print(f"  ✗ Error: {e}")
-            print(f"  Please run the feature extraction notebook first")
+        except Exception as e:
+            print(f"  ✗ Error loading data: {e}")
+            print(f"\n  📋 TROUBLESHOOTING:")
+            print(f"     1. Generate demo data: python generate_demo_data.py")
+            print(f"     2. Check file shapes are correct (n_samples, 595)")
+            print(f"     3. Check labels are in range 0-4")
+            print(f"\n     📖 See WORKING_WITHOUT_DATA.md for help")
             return False
     
     def train_individual_models(self):
         """Train individual classifiers."""
         print("\n[STEP 2] Training individual models...")
+        
+        if not hasattr(self, 'X_train_scaled'):
+            print("  ✗ Data not loaded. Skipping model training.")
+            return
         
         # Define classifiers
         self.classifiers = {
@@ -109,13 +138,13 @@ class DRModelTrainer:
                 n_estimators=RANDOM_FOREST_N_ESTIMATORS,
                 random_state=RANDOM_STATE,
                 n_jobs=-1,
-                verbose=1
+                verbose=0  # Changed to 0 to reduce output
             ),
             "SVM": SVC(
                 kernel=SVM_KERNEL,
                 probability=True,
                 random_state=RANDOM_STATE,
-                verbose=1
+                verbose=0  # Changed to 0
             ),
             "KNN": KNeighborsClassifier(
                 n_neighbors=KNN_N_NEIGHBORS
@@ -168,6 +197,8 @@ class DRModelTrainer:
                 
             except Exception as e:
                 print(f"    ✗ Error training {name}: {e}")
+                print(f"       Continuing with other models...")
+                continue
     
     def train_voting_classifier(self):
         """Train the ensemble voting classifier."""
@@ -247,6 +278,14 @@ class DRModelTrainer:
     
     def print_summary(self):
         """Print training summary."""
+        if not self.results:
+            print("\n" + "="*60)
+            print("NO TRAINING RESULTS")
+            print("="*60)
+            print("No models were successfully trained.")
+            print("="*60)
+            return
+        
         print("\n" + "="*60)
         print("TRAINING SUMMARY")
         print("="*60)
@@ -269,6 +308,17 @@ class DRModelTrainer:
         """Run the complete training pipeline."""
         try:
             if not self.load_data():
+                print("\n" + "="*60)
+                print("DATA LOADING FAILED")
+                print("="*60)
+                print("\n🚀 NEXT STEPS:")
+                print("   1. Generate demo data:")
+                print("      python generate_demo_data.py")
+                print("\n   2. Run training again:")
+                print("      python train_models.py")
+                print("\n   3. Read the complete guide:")
+                print("      See WORKING_WITHOUT_DATA.md")
+                print("\n" + "="*60)
                 return False
             
             self.train_individual_models()
@@ -279,11 +329,13 @@ class DRModelTrainer:
             print("\n[SUCCESS] Training pipeline completed successfully!")
             print(f"Models saved in: {self.models_dir}")
             print(f"Reports saved in: {self.outputs_dir}")
+            print("\n📖 View results with: cat outputs/randomforest_report.txt")
             
             return True
         
         except Exception as e:
             print(f"\n[ERROR] Training pipeline failed: {e}")
+            print(f"\n💡 Try running: python generate_demo_data.py")
             return False
 
 
