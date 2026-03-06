@@ -2,9 +2,12 @@ import os
 import sys
 import numpy as np
 import pandas as pd
+from pathlib import Path
 
-os.chdir('notebooks')
-sys.path.append('../scripts')
+# Navigate relative to project root
+_project_root = str(Path(__file__).resolve().parent.parent)
+os.chdir(os.path.join(_project_root, 'notebooks'))
+sys.path.append(os.path.join(_project_root, 'scripts'))
 
 try:
     # Load labels to verify data

@@ -9,7 +9,8 @@
 ```
 SHARED ON GITHUB (Public Repository):
 ✅ All code files (.py)
-✅ Configuration files (config.py, setup_env.py)
+✅ Configuration files (config.py)
+✅ Utility scripts (utils/ folder)
 ✅ Jupyter notebook (hybrid_dr_detection.ipynb)
 ✅ Requirements.txt (dependencies)
 ✅ Documentation (README, guides)
@@ -47,7 +48,7 @@ source venv/bin/activate  # macOS/Linux
 pip install -r requirements.txt
 
 # Step 4: Generate demo data (synthetic, no images needed)
-python generate_demo_data.py
+python utils/generate_demo_data.py
 
 # Step 5: Train models
 python train_models.py
@@ -206,11 +207,11 @@ Each team member should:
     → pip install -r requirements.txt
 
 [ ] Verify setup works
-    → python test_project.py
+    → python utils/test_project.py
     → Should show: [OK] All tests passed
 
 [ ] Generate demo data (just to verify everything)
-    → python generate_demo_data.py
+    → python utils/generate_demo_data.py
 
 [ ] Train models on demo data
     → python train_models.py
@@ -240,7 +241,7 @@ Each team member should:
 ```
 1. Clone repo ✓
 2. Install deps ✓
-3. Use generate_demo_data.py + train_models.py for automated training
+3. Use utils/generate_demo_data.py + train_models.py for automated training
 4. Modify training pipeline (config.py)
 5. Deploy models to production (models/ folder)
 6. Monitor with evaluate_models.py
@@ -251,7 +252,7 @@ Each team member should:
 1. Clone repo ✓
 2. Install deps ✓
 3. Download generated reports: outputs/
-4. Create custom visualizations: model_comparison_visualizer.py
+4. Create custom visualizations: utils/model_comparison_visualizer.py
 5. Generate presentation materials
 ```
 
@@ -288,7 +289,7 @@ Team Member Total Download:
 ### **Issue: "data/train_images/ not found"**
 ```
 Solution:
-1. Run: python generate_demo_data.py
+1. Run: python utils/generate_demo_data.py
 2. This creates synthetic data for testing
 3. Only need real images if using the notebook
 ```
@@ -339,7 +340,7 @@ Each Team Member:
 1. Clone repo
 2. Set up venv + install deps
 3. Download data (optional)
-4. Run test_project.py to verify setup
+4. Run utils/test_project.py to verify setup
 ```
 
 ### **Day 2+: Development**
@@ -357,7 +358,7 @@ Data Experiments:
   - Share results in PR
   
 - If using demo data:
-  - Run generate_demo_data.py
+  - Run utils/generate_demo_data.py
   - Run train_models.py
   - Compare results
 ```
@@ -398,8 +399,8 @@ Documentation:
 [ ] Requirements.txt updated
 
 Testing:
-[ ] test_project.py passes
-[ ] test_notebook_data.py passes
+[ ] utils/test_project.py passes
+[ ] utils/test_notebook_data.py passes
 [ ] train_models.py runs without errors
 [ ] evaluate_models.py produces reports
 
@@ -434,8 +435,8 @@ WELCOME TO THE DR DETECTION PROJECT!
 Quick Start (5 minutes):
 1. Download: https://github.com/Nihar0001/...
 2. Setup: See README_SETUP.md
-3. Test: python test_project.py
-4. Train: python generate_demo_data.py && python train_models.py
+3. Test: python utils/test_project.py
+4. Train: python utils/generate_demo_data.py; python train_models.py
 
 Using Real Data (60+ minutes):
 1. Download images from: [SHARE YOUR LINK]

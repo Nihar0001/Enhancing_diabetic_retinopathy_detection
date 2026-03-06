@@ -5,7 +5,11 @@ Generates synthetic training/test data for demonstration and testing purposes.
 
 import numpy as np
 import os
+import sys
 from pathlib import Path
+
+# Add project root to path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from config import DATA_DIR, create_directories
 
 def generate_demo_data(n_train=100, n_test=20, n_features=595, n_classes=5):

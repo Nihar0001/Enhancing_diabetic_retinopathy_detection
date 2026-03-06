@@ -11,14 +11,14 @@ Start here based on what you need:
 
 | Document | Purpose | Read Time |
 |----------|---------|-----------|
-| **[README_SETUP.md](README_SETUP.md)** | 📋 Complete setup guide & getting started | ⏱️ 10 min |
+| **[README_SETUP.md](docs/README_SETUP.md)** | 📋 Complete setup guide & getting started | ⏱️ 10 min |
 | **[WORKING_WITHOUT_DATA.md](docs/WORKING_WITHOUT_DATA.md)** | 🎯 Guide for working without real data | 📖 15 min |
 | **[QUICK_START.md](docs/QUICK_START.md)** | ⚡ Get running in 5 minutes | ⏱️ 5 min |
 | **[IMPLEMENTATION_GUIDE.md](docs/IMPLEMENTATION_GUIDE.md)** | Detailed usage & code structure | 📖 20 min |
 | **[CHANGELOG.md](docs/CHANGELOG.md)** | All improvements made (v1.0.0) | 📝 10 min |
 | **[config.py](config.py)** | Configuration reference | 💾 Reference |
 
-**→ [START HERE: README_SETUP.md](README_SETUP.md)** ⚡
+**→ [START HERE: README_SETUP.md](docs/README_SETUP.md)** ⚡
 
 ---
 
@@ -78,25 +78,29 @@ Adding improved metrics and visualization
 
 ```
 Enhancing-diabetic-retinopathy-detection/
-├── .git/                      # Git repository (NEW)
-├── .gitignore                 # Git ignore rules (NEW)
-├── config.py                  # Central configuration (NEW)
-├── readme.md                  # This file (UPDATED)
+├── config.py                  # Central configuration
+├── train_models.py            # Main training script
+├── evaluate_models.py         # Model evaluation script
+├── requirements.txt           # Python dependencies
+├── readme.md                  # This file
 ├── scripts/
-│   ├── __init__.py           # Package init (NEW)
-│   ├── preprocessing.py      # Image preprocessing (IMPROVED)
-│   ├── feature_extraction.py # Feature extraction (IMPROVED)
+│   ├── __init__.py           # Package init
+│   ├── preprocessing.py      # Image preprocessing
+│   ├── feature_extraction.py # Feature extraction (VGG16 + LBP + GLCM)
 │   └── visualize.py          # Visualization functions
+├── utils/
+│   ├── generate_demo_data.py # Generate synthetic data for testing
+│   ├── generate_scaler.py    # Scaler generation utility
+│   ├── model_comparison_visualizer.py  # Compare model results
+│   ├── setup_env.py          # Environment setup helper
+│   ├── test_project.py       # Project validation tests
+│   └── test_notebook_data.py # Notebook data verification
 ├── notebooks/
 │   └── hybrid_dr_detection.ipynb
-├── models/
-│   ├── randomforest_model.pkl
-│   ├── svm_model.pkl
-│   ├── knn_model.pkl
-│   ├── votingclassifier_model.pkl
-│   └── scaler.pkl
-└── outputs/
-    └── [reports and visualizations]
+├── docs/                      # Documentation
+├── models/                    # Trained model files (.pkl)
+├── data/                      # Data files (.npy, .csv, images)
+└── outputs/                   # Reports and visualizations
 ```
 
 ---
@@ -114,7 +118,7 @@ venv\Scripts\activate
 pip install -r requirements.txt
 
 # 2. Generate demo data for testing
-python generate_demo_data.py
+python utils/generate_demo_data.py
 
 # 3. Test the pipeline
 python train_models.py
@@ -169,7 +173,7 @@ pip install -r requirements.txt
 
 ### 2. Generate Demo Data (if no real data yet)
 ```bash
-python generate_demo_data.py
+python utils/generate_demo_data.py
 ```
 
 ### 3. Train Models (with demo or real data)

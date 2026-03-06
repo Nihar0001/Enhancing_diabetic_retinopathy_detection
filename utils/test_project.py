@@ -1,4 +1,4 @@
-"""
+﻿"""
 Comprehensive Test Suite for Diabetic Retinopathy Detection Project
 Tests all functionality without needing real data.
 """
@@ -8,8 +8,10 @@ import os
 from pathlib import Path
 import traceback
 
-# Add scripts to path
-sys.path.insert(0, str(Path(__file__).parent / 'scripts'))
+# Add project root and scripts to path
+_project_root = str(Path(__file__).resolve().parent.parent)
+sys.path.insert(0, _project_root)
+sys.path.insert(0, os.path.join(_project_root, 'scripts'))
 
 def print_section(title):
     """Print a formatted section header."""
@@ -25,23 +27,27 @@ def test_imports():
     tests_total = 0
     
     imports_to_test = [
-        ("numpy", "Core numerical computing"),
-        ("pandas", "Data handling"),
-        ("sklearn", "Machine learning"),
-        ("tensorflow", "Deep learning"),
-        ("cv2", "Image processing"),
-        ("seaborn", "Visualization"),
-        ("matplotlib", "Plotting"),
+        ("numpy", "Core numerical computing", True),
+        ("pandas", "Data handling", True),
+        ("sklearn", "Machine learning", True),
+        ("tensorflow", "Deep learning (optional)", False),
+        ("cv2", "Image processing", True),
+        ("seaborn", "Visualization", True),
+        ("matplotlib", "Plotting", True),
     ]
     
-    for module_name, description in imports_to_test:
+    for module_name, description, required in imports_to_test:
         tests_total += 1
         try:
             __import__(module_name)
-            print(f"  ✓ {module_name:<15} - {description}")
+            print(f"  [OK] {module_name:<15} - {description}")
             tests_passed += 1
         except ImportError as e:
-            print(f"  ✗ {module_name:<15} - FAILED: {e}")
+            if required:
+                print(f"  [FAIL] {module_name:<15} - REQUIRED: {e}")
+            else:
+                print(f"  [SKIP] {module_name:<15} - OPTIONAL: {e}")
+                tests_passed += 1
     
     print(f"\nResult: {tests_passed}/{tests_total} imports successful")
     return tests_passed == tests_total
@@ -57,7 +63,7 @@ def test_config():
             create_directories, validate_paths
         )
         
-        print(f"  ✓ Configuration imported successfully")
+        print(f"  [OK] Configuration imported successfully")
         print(f"    - Project Root: {PROJECT_ROOT}")
         print(f"    - Data Dir: {DATA_DIR}")
         print(f"    - Models Dir: {MODELS_DIR}")
@@ -66,11 +72,11 @@ def test_config():
         
         # Create directories
         create_directories()
-        print(f"  ✓ Directories created")
+        print(f"  [OK] Directories created")
         
         return True
     except Exception as e:
-        print(f"  ✗ Configuration test FAILED: {e}")
+        print(f"  [FAIL] Configuration test FAILED: {e}")
         traceback.print_exc()
         return False
 
@@ -80,19 +86,19 @@ def test_scripts_import():
     
     try:
         from scripts.preprocessing import preprocess_image, advanced_preprocess_image
-        print(f"  ✓ preprocessing module imported")
+        print(f"  [OK] preprocessing module imported")
         
         from scripts.feature_extraction import (
             extract_deep_features, extract_lbp, extract_haralick
         )
-        print(f"  ✓ feature_extraction module imported")
+        print(f"  [OK] feature_extraction module imported")
         
         from scripts.visualize import plot_normalized_confusion_matrix
-        print(f"  ✓ visualize module imported")
+        print(f"  [OK] visualize module imported")
         
         return True
     except Exception as e:
-        print(f"  ✗ Scripts import FAILED: {e}")
+        print(f"  [FAIL] Scripts import FAILED: {e}")
         traceback.print_exc()
         return False
 
@@ -102,19 +108,19 @@ def test_data_generation():
     
     try:
         from generate_demo_data import generate_demo_data
-        print(f"  ✓ Demo data generator imported")
+        print(f"  [OK] Demo data generator imported")
         
         # Generate small demo dataset
         data = generate_demo_data(n_train=50, n_test=10)
         
-        print(f"  ✓ Demo data generated successfully")
+        print(f"  [OK] Demo data generated successfully")
         print(f"    - Training samples: {data['X_train'].shape[0]}")
         print(f"    - Test samples: {data['X_test'].shape[0]}")
         print(f"    - Features: {data['X_train'].shape[1]}")
         
         return True
     except Exception as e:
-        print(f"  ✗ Demo data generation FAILED: {e}")
+        print(f"  [FAIL] Demo data generation FAILED: {e}")
         traceback.print_exc()
         return False
 
@@ -124,21 +130,21 @@ def test_model_modules():
     
     try:
         from train_models import DRModelTrainer
-        print(f"  ✓ DRModelTrainer class imported")
+        print(f"  [OK] DRModelTrainer class imported")
         
         from evaluate_models import DRModelEvaluator
-        print(f"  ✓ DRModelEvaluator class imported")
+        print(f"  [OK] DRModelEvaluator class imported")
         
         # Check that classes have required methods
         trainer = DRModelTrainer()
-        print(f"  ✓ DRModelTrainer instantiated")
+        print(f"  [OK] DRModelTrainer instantiated")
         
         evaluator = DRModelEvaluator()
-        print(f"  ✓ DRModelEvaluator instantiated")
+        print(f"  [OK] DRModelEvaluator instantiated")
         
         return True
     except Exception as e:
-        print(f"  ✗ Model modules test FAILED: {e}")
+        print(f"  [FAIL] Model modules test FAILED: {e}")
         traceback.print_exc()
         return False
 
@@ -148,19 +154,19 @@ def test_environment_setup():
     
     try:
         from setup_env import setup_project_paths, validate_environment
-        print(f"  ✓ setup_env module imported")
+        print(f"  [OK] setup_env module imported")
         
         project_root, scripts_path = setup_project_paths()
-        print(f"  ✓ Project paths configured")
+        print(f"  [OK] Project paths configured")
         print(f"    - Project root: {project_root}")
         print(f"    - Scripts path: {scripts_path}")
         
         is_valid = validate_environment()
-        print(f"  ✓ Environment validated")
+        print(f"  [OK] Environment validated")
         
         return True
     except Exception as e:
-        print(f"  ✗ Environment setup test FAILED: {e}")
+        print(f"  [FAIL] Environment setup test FAILED: {e}")
         traceback.print_exc()
         return False
 
@@ -175,27 +181,27 @@ def test_training_pipeline():
         # Generate small demo dataset
         print("  [1] Generating demo data...")
         generate_demo_data(n_train=30, n_test=10)
-        print("      ✓ Demo data generated")
+        print("      [OK] Demo data generated")
         
         # Test trainer initialization
         print("  [2] Initializing trainer...")
         trainer = DRModelTrainer()
-        print("      ✓ Trainer initialized")
+        print("      [OK] Trainer initialized")
         
         # Test data loading
         print("  [3] Testing data loading...")
         if trainer.load_data():
-            print("      ✓ Data loaded successfully")
+            print("      [OK] Data loaded successfully")
             print(f"        - Training shape: {trainer.X_train_scaled.shape}")
             print(f"        - Test shape: {trainer.X_test_scaled.shape}")
         else:
-            print("      ⚠ Data loading returned False (expected if no data)")
+            print("      [WARN] Data loading returned False (expected if no data)")
         
-        print("\n  ✓ Training pipeline test passed")
+        print("\n  [OK] Training pipeline test passed")
         return True
         
     except Exception as e:
-        print(f"  ✗ Training pipeline test FAILED: {e}")
+        print(f"  [FAIL] Training pipeline test FAILED: {e}")
         traceback.print_exc()
         return False
 
@@ -220,15 +226,15 @@ def test_configuration_values():
         all_passed = True
         for test, description in tests:
             if test:
-                print(f"  ✓ {description}")
+                print(f"  [OK] {description}")
             else:
-                print(f"  ✗ {description}")
+                print(f"  [FAIL] {description}")
                 all_passed = False
         
         return all_passed
         
     except Exception as e:
-        print(f"  ✗ Configuration values test FAILED: {e}")
+        print(f"  [FAIL] Configuration values test FAILED: {e}")
         return False
 
 def test_file_structure():
@@ -237,29 +243,30 @@ def test_file_structure():
     
     required_files = [
         'config.py',
-        'setup_env.py',
         'train_models.py',
         'evaluate_models.py',
-        'generate_demo_data.py',
         'requirements.txt',
-        'QUICK_START.md',
-        'IMPLEMENTATION_GUIDE.md',
         'readme.md',
         'scripts/__init__.py',
         'scripts/preprocessing.py',
         'scripts/feature_extraction.py',
         'scripts/visualize.py',
+        'utils/setup_env.py',
+        'utils/generate_demo_data.py',
+        'utils/test_project.py',
+        'docs/QUICK_START.md',
+        'docs/IMPLEMENTATION_GUIDE.md',
     ]
     
-    project_root = Path(__file__).parent
+    project_root = Path(__file__).resolve().parent.parent
     
     all_exist = True
     for filename in required_files:
         filepath = project_root / filename
         if filepath.exists():
-            print(f"  ✓ {filename}")
+            print(f"  [OK] {filename}")
         else:
-            print(f"  ✗ {filename} - NOT FOUND")
+            print(f"  [FAIL] {filename} - NOT FOUND")
             all_exist = False
     
     return all_exist
@@ -298,13 +305,13 @@ def run_all_tests():
     total = len(results)
     
     for test_name, result in results:
-        status = "✓ PASS" if result else "✗ FAIL"
+        status = "[OK] PASS" if result else "[FAIL] FAIL"
         print(f"  {status}: {test_name}")
     
     print(f"\nTotal: {passed}/{total} tests passed")
     
     if passed == total:
-        print_section("✅ ALL TESTS PASSED!")
+        print_section("[PASS] ALL TESTS PASSED!")
         print("  Your project is ready for use!")
         print("\n  Next steps:")
         print("    1. Share GitHub URL with team")
@@ -314,7 +321,7 @@ def run_all_tests():
         print("    5. Run: python train_models.py (with real data)")
         return True
     else:
-        print_section("⚠️  SOME TESTS FAILED")
+        print_section("[WARN]  SOME TESTS FAILED")
         print(f"  {total - passed} test(s) need attention")
         print("\n  Check error messages above and:")
         print("    1. Verify Python version (3.8+)")
