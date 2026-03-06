@@ -12,11 +12,11 @@ Start here based on what you need:
 | Document | Purpose | Read Time |
 |----------|---------|-----------|
 | **[README_SETUP.md](README_SETUP.md)** | 📋 Complete setup guide & getting started | ⏱️ 10 min |
-| **[WORKING_WITHOUT_DATA.md](WORKING_WITHOUT_DATA.md)** | 🎯 Guide for working without real data | 📖 15 min |
-| **[QUICK_START.md](QUICK_START.md)** | ⚡ Get running in 5 minutes | ⏱️ 5 min |
-| **[IMPLEMENTATION_GUIDE.md](IMPLEMENTATION_GUIDE.md)** | Detailed usage & code structure | 📖 20 min |
-| **[CHANGELOG.md](CHANGELOG.md)** | All improvements made (v1.0.0) | 📝 10 min |
-| **[config.py](scripts/config.py)** | Configuration reference | 💾 Reference |
+| **[WORKING_WITHOUT_DATA.md](docs/WORKING_WITHOUT_DATA.md)** | 🎯 Guide for working without real data | 📖 15 min |
+| **[QUICK_START.md](docs/QUICK_START.md)** | ⚡ Get running in 5 minutes | ⏱️ 5 min |
+| **[IMPLEMENTATION_GUIDE.md](docs/IMPLEMENTATION_GUIDE.md)** | Detailed usage & code structure | 📖 20 min |
+| **[CHANGELOG.md](docs/CHANGELOG.md)** | All improvements made (v1.0.0) | 📝 10 min |
+| **[config.py](config.py)** | Configuration reference | 💾 Reference |
 
 **→ [START HERE: README_SETUP.md](README_SETUP.md)** ⚡
 
