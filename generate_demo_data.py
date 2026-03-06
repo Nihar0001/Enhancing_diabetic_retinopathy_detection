@@ -81,10 +81,10 @@ def generate_demo_data(n_train=100, n_test=20, n_features=595, n_classes=5):
     for filename, data in data_files.items():
         filepath = DATA_DIR / filename
         np.save(str(filepath), data)
-        print(f"     ✓ Saved: {filename}")
+        print(f"     [OK] Saved: {filename}")
     
     print("\n" + "="*60)
-    print("✅ DEMO DATA GENERATED SUCCESSFULLY!")
+    print("[SUCCESS] DEMO DATA GENERATED SUCCESSFULLY!")
     print("="*60)
     print(f"\nData files saved to: {DATA_DIR}")
     print("\nYou can now run:")

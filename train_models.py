@@ -107,16 +107,16 @@ class DRModelTrainer:
             self.y_train = np.load(str(Y_TRAIN_FILE))
             self.y_test = np.load(str(Y_TEST_FILE))
             
-            print(f"  ✓ X_train_scaled shape: {self.X_train_scaled.shape}")
-            print(f"  ✓ X_test_scaled shape: {self.X_test_scaled.shape}")
-            print(f"  ✓ y_train shape: {self.y_train.shape}")
-            print(f"  ✓ y_test shape: {self.y_test.shape}")
-            print(f"  ✓ Unique classes in y_test: {np.unique(self.y_test)}")
+            print(f"  [OK] X_train_scaled shape: {self.X_train_scaled.shape}")
+            print(f"  [OK] X_test_scaled shape: {self.X_test_scaled.shape}")
+            print(f"  [OK] y_train shape: {self.y_train.shape}")
+            print(f"  [OK] y_test shape: {self.y_test.shape}")
+            print(f"  [OK] Unique classes in y_test: {np.unique(self.y_test)}")
             
             return True
         
         except Exception as e:
-            print(f"  ✗ Error loading data: {e}")
+            print(f"  [ERROR] Error loading data: {e}")
             print(f"\n  📋 TROUBLESHOOTING:")
             print(f"     1. Generate demo data: python generate_demo_data.py")
             print(f"     2. Check file shapes are correct (n_samples, 595)")
@@ -129,7 +129,7 @@ class DRModelTrainer:
         print("\n[STEP 2] Training individual models...")
         
         if not hasattr(self, 'X_train_scaled'):
-            print("  ✗ Data not loaded. Skipping model training.")
+            print("  [ERROR] Data not loaded. Skipping model training.")
             return
         
         # Define classifiers
@@ -173,8 +173,8 @@ class DRModelTrainer:
                 accuracy = accuracy_score(self.y_test, y_pred)
                 f1_weighted = f1_score(self.y_test, y_pred, average='weighted')
                 
-                print(f"    ✓ Accuracy: {accuracy:.4f}")
-                print(f"    ✓ F1-Score (weighted): {f1_weighted:.4f}")
+                print(f"    [OK] Accuracy: {accuracy:.4f}")
+                print(f"    [OK] F1-Score (weighted): {f1_weighted:.4f}")
                 
                 # Store results
                 self.results[name] = {
@@ -193,10 +193,10 @@ class DRModelTrainer:
                 }[name]
                 
                 joblib.dump(clf, str(model_path))
-                print(f"    ✓ Model saved to {model_path.name}")
+                print(f"    [OK] Model saved to {model_path.name}")
                 
             except Exception as e:
-                print(f"    ✗ Error training {name}: {e}")
+                print(f"    [ERROR] Error training {name}: {e}")
                 print(f"       Continuing with other models...")
                 continue
     
@@ -224,8 +224,8 @@ class DRModelTrainer:
             accuracy = accuracy_score(self.y_test, y_pred)
             f1_weighted = f1_score(self.y_test, y_pred, average='weighted')
             
-            print(f"  ✓ Voting Classifier Accuracy: {accuracy:.4f}")
-            print(f"  ✓ Voting Classifier F1-Score: {f1_weighted:.4f}")
+            print(f"  [OK] Voting Classifier Accuracy: {accuracy:.4f}")
+            print(f"  [OK] Voting Classifier F1-Score: {f1_weighted:.4f}")
             
             # Store results
             self.results['VotingClassifier'] = {
@@ -238,10 +238,10 @@ class DRModelTrainer:
             
             # Save model
             joblib.dump(voting_clf, str(VOTING_MODEL_FILE))
-            print(f"  ✓ Model saved to {VOTING_MODEL_FILE.name}")
+            print(f"  [OK] Model saved to {VOTING_MODEL_FILE.name}")
             
         except Exception as e:
-            print(f"  ✗ Error training voting classifier: {e}")
+            print(f"  [ERROR] Error training voting classifier: {e}")
     
     def generate_reports(self):
         """Generate classification reports."""
@@ -271,10 +271,10 @@ class DRModelTrainer:
                     f.write(f"Accuracy: {result['accuracy']:.4f}\n")
                     f.write(f"F1-Score (weighted): {result['f1_score']:.4f}\n")
                 
-                print(f"  ✓ Report saved to {report_file.name}")
+                print(f"  [OK] Report saved to {report_file.name}")
                 
             except Exception as e:
-                print(f"  ✗ Error generating report for {name}: {e}")
+                print(f"  [ERROR] Error generating report for {name}: {e}")
     
     def print_summary(self):
         """Print training summary."""
@@ -335,7 +335,7 @@ class DRModelTrainer:
         
         except Exception as e:
             print(f"\n[ERROR] Training pipeline failed: {e}")
-            print(f"\n💡 Try running: python generate_demo_data.py")
+            print(f"\n[TIP] Try running: python generate_demo_data.py")
             return False
 
 
