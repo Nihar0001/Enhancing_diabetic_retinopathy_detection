@@ -7,7 +7,7 @@ import os
 from pathlib import Path
 
 # Get the project root directory
-PROJECT_ROOT = Path(__file__).parent.parent.absolute()
+PROJECT_ROOT = Path(__file__).parent.absolute()
 
 # ===================== PATHS =====================
 DATA_DIR = PROJECT_ROOT / "data"

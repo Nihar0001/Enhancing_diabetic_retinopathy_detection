@@ -47,9 +47,20 @@ python test_project.py
 
 **Expected:** Most tests pass (remaining failures are just optional packages)
 
-### **Step 5: Generate Demo Data**
+### **Step 5: Get Data**
+
+#### Option A: Download from Google Drive (Recommended for real training)
 ```bash
-python generate_demo_data.py
+# 1. Visit the data folder on Google Drive:
+#    https://drive.google.com/drive/folders/1lKMGO2NrZ67wH5LJkvFxRpF75I89CgZt?usp=drive_link
+# 2. Download and extract all files into the data/ folder
+# 3. Your data/ folder should contain: train_images/, test_images/, *.csv, *.npy files
+```
+> 📖 See [GOOGLE_DRIVE_SETUP.md](GOOGLE_DRIVE_SETUP.md) for a step-by-step guide.
+
+#### Option B: Generate Demo Data
+```bash
+python utils/generate_demo_data.py
 ```
 
 **Expected output:**

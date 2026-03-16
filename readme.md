@@ -105,6 +105,40 @@ Enhancing-diabetic-retinopathy-detection/
 
 ---
 
+## 📥 Getting the Data
+
+### Data & Pre-trained Models (Google Drive)
+
+The training data and optional pre-trained models are hosted on Google Drive:
+
+| Resource | Link | Required? |
+|----------|------|-----------|
+| **Data Folder** (images + CSV + .npy files) | [Download Data](https://drive.google.com/drive/folders/1lKMGO2NrZ67wH5LJkvFxRpF75I89CgZt?usp=drive_link) | ✅ For real training |
+| **Pre-trained Models** (optional, skip if training yourself) | [Download Models](https://drive.google.com/drive/folders/1AlpsNZeaCD33i0ufbsP2LSnXKM2tX7Mt?usp=drive_link) | ⚠️ Optional |
+
+#### Data Folder Contents
+After downloading, place files so your project looks like:
+```
+data/
+├── train_images/        # Retina training images
+├── test_images/         # Retina test images
+├── train.csv            # Training labels
+├── test.csv             # Test labels
+├── X_features.npy
+├── X_train.npy
+├── X_test.npy
+├── X_train_scaled.npy
+├── X_test_scaled.npy
+├── y_train.npy
+├── y_test.npy
+└── y_labels.npy
+```
+
+> 📖 See [docs/GOOGLE_DRIVE_SETUP.md](docs/GOOGLE_DRIVE_SETUP.md) for a detailed download & setup guide.  
+> 📖 See [docs/DOWNLOAD_DATA.md](docs/DOWNLOAD_DATA.md) for a quick reference.
+
+---
+
 ## 🔧 Quick Start Workflow
 
 ### ✅ For Team Members WITHOUT Real Data
