@@ -12,6 +12,10 @@ from skimage.feature import graycomatrix, graycoprops
 
 # Suppress warnings
 warnings.filterwarnings('ignore', category=FutureWarning)
+warnings.filterwarnings('ignore', category=DeprecationWarning)
+
+# Set TensorFlow log level before importing to suppress deprecation output
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 # Try to load TensorFlow for deep learning features
 model = None
@@ -22,11 +26,9 @@ try:
     from tensorflow.keras.applications.vgg16 import VGG16, preprocess_input
     from tensorflow.keras.models import Model
     
-    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
     tf.get_logger().setLevel('ERROR')
     
-    # Load a pre-trained deep learning model for feature extraction
-    # Using weights='imagenet' with proper TensorFlow 2.x compatibility
+    # Load a pre-trained VGG16 model for feature extraction (TF 2.x compatible)
     base_model = VGG16(
         weights='imagenet',
         include_top=False,

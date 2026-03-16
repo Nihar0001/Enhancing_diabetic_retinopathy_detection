@@ -40,6 +40,31 @@ python setup_env.py
 
 ## 🎯 Step 3: Run the Pipelines (2 minutes)
 
+### **Option A: Use Real Data from Google Drive**
+
+If you have access to the project's Google Drive data folder:
+
+```bash
+# 1. Download from: https://drive.google.com/drive/folders/1lKMGO2NrZ67wH5LJkvFxRpF75I89CgZt?usp=drive_link
+# 2. Extract all files into the data/ folder of this project
+# 3. Run training directly:
+python train_models.py
+```
+
+> 📖 See [GOOGLE_DRIVE_SETUP.md](GOOGLE_DRIVE_SETUP.md) for detailed download instructions.
+
+---
+
+### **Option B: Generate Demo Data (No real data needed)**
+
+```bash
+python utils/generate_demo_data.py
+```
+
+Then proceed to training below.
+
+---
+
 ### **Train Models** (requires preprocessed data)
 ```bash
 python train_models.py
