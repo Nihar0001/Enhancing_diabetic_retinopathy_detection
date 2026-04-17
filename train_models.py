@@ -28,8 +28,15 @@ from sklearn.preprocessing import StandardScaler
 
 # Add scripts to path
 sys.path.insert(0, "scripts")
-from preprocessing import preprocess_image  # type: ignore
-from feature_extraction import extract_features  # type: ignore
+
+# Import custom modules (dynamic path)
+try:
+    from preprocessing import preprocess_image  # type: ignore
+    from feature_extraction import extract_features  # type: ignore
+except ImportError:
+    preprocess_image = None  # type: ignore
+    extract_features = None  # type: ignore
+    print("⚠️ Warning: Custom modules not found. Will use fallback feature extraction.")
 
 print("\n" + "="*60)
 print("REAL DATA MODEL TRAINING")
