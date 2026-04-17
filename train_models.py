@@ -8,7 +8,6 @@ This script handles the complete training pipeline with:
 - Progress tracking
 """
 
-import os
 import sys
 import numpy as np
 import joblib
@@ -22,22 +21,20 @@ from config import (
     PROJECT_ROOT, DATA_DIR, MODELS_DIR, OUTPUTS_DIR,
     X_TRAIN_FILE, X_TEST_FILE, Y_TRAIN_FILE, Y_TEST_FILE,
     X_TRAIN_SCALED_FILE, X_TEST_SCALED_FILE,
-    RF_MODEL_FILE, SVM_MODEL_FILE, KNN_MODEL_FILE, 
-    VOTING_MODEL_FILE, SCALER_FILE,
-    CLASS_NAMES, RANDOM_STATE, TEST_SIZE,
-    RANDOM_FOREST_N_ESTIMATORS, SVM_KERNEL, KNN_N_NEIGHBORS,
+    RF_MODEL_FILE, SVM_MODEL_FILE, GB_MODEL_FILE,
+    VOTING_MODEL_FILE,
+    CLASS_NAMES, RANDOM_STATE,
+    RANDOM_FOREST_N_ESTIMATORS, SVM_KERNEL,
     create_directories, validate_paths
 )
 
 from sklearn.ensemble import RandomForestClassifier, VotingClassifier
 from sklearn.svm import SVC
-from sklearn.neighbors import KNeighborsClassifier
+from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.metrics import (
     classification_report, confusion_matrix, 
     accuracy_score, f1_score
 )
-from sklearn.preprocessing import StandardScaler
-
 warnings.filterwarnings('ignore')
 
 
@@ -93,9 +90,9 @@ class DRModelTrainer:
                 for f in missing_files:
                     print(f"    - {f}")
                 print(f"\n  📋 SOLUTION: Generate demo data first!")
-                print(f"     Run: python generate_demo_data.py")
+                print(f"     Run: python utils/generate_demo_data.py")
                 print(f"\n     After that, run this script again.")
-                print(f"\n     📖 See WORKING_WITHOUT_DATA.md for complete guide")
+                print(f"\n     📖 See docs/WORKING_WITHOUT_DATA.md for complete guide")
                 return False
             
             # Load the data
@@ -118,10 +115,10 @@ class DRModelTrainer:
         except Exception as e:
             print(f"  [ERROR] Error loading data: {e}")
             print(f"\n  📋 TROUBLESHOOTING:")
-            print(f"     1. Generate demo data: python generate_demo_data.py")
+            print(f"     1. Generate demo data: python utils/generate_demo_data.py")
             print(f"     2. Check file shapes are correct (n_samples, 595)")
             print(f"     3. Check labels are in range 0-4")
-            print(f"\n     📖 See WORKING_WITHOUT_DATA.md for help")
+            print(f"\n     📖 See docs/WORKING_WITHOUT_DATA.md for help")
             return False
     
     def train_individual_models(self):
@@ -138,16 +135,19 @@ class DRModelTrainer:
                 n_estimators=RANDOM_FOREST_N_ESTIMATORS,
                 random_state=RANDOM_STATE,
                 n_jobs=-1,
+                class_weight='balanced',
                 verbose=0  # Changed to 0 to reduce output
             ),
             "SVM": SVC(
                 kernel=SVM_KERNEL,
                 probability=True,
+                cache_size=2000,
                 random_state=RANDOM_STATE,
+                class_weight='balanced',
                 verbose=0  # Changed to 0
             ),
-            "KNN": KNeighborsClassifier(
-                n_neighbors=KNN_N_NEIGHBORS
+            "GradientBoosting": HistGradientBoostingClassifier(
+                random_state=RANDOM_STATE
             ),
         }
         
@@ -155,8 +155,8 @@ class DRModelTrainer:
             print(f"\n  Training {name}...")
             
             try:
-                # Use scaled data for SVM and KNN, unscaled for RandomForest
-                if name in ["SVM", "KNN"]:
+                # Use scaled data for SVM and GradientBoosting, unscaled for RandomForest
+                if name in ["SVM", "GradientBoosting"]:
                     X_train = self.X_train_scaled
                     X_test = self.X_test_scaled
                 else:
@@ -189,7 +189,7 @@ class DRModelTrainer:
                 model_path = {
                     'RandomForest': RF_MODEL_FILE,
                     'SVM': SVM_MODEL_FILE,
-                    'KNN': KNN_MODEL_FILE
+                    'GradientBoosting': GB_MODEL_FILE
                 }[name]
                 
                 joblib.dump(clf, str(model_path))
@@ -209,12 +209,13 @@ class DRModelTrainer:
                 estimators=[
                     ('rf', self.classifiers['RandomForest']),
                     ('svm', self.classifiers['SVM']),
-                    ('knn', self.classifiers['KNN'])
+                    ('gb', self.classifiers['GradientBoosting'])
                 ],
-                voting='soft'
+                voting='soft',
+                n_jobs=-1
             )
             
-            # Train on scaled data (SVM and KNN need it)
+            # Train on scaled data (SVM and GB need it)
             voting_clf.fit(self.X_train_scaled, self.y_train)
             
             # Predict
@@ -238,7 +239,7 @@ class DRModelTrainer:
             
             # Save model
             joblib.dump(voting_clf, str(VOTING_MODEL_FILE))
-            print(f"  [OK] Model saved to {VOTING_MODEL_FILE.name}")
+            print(f"  [OK] Model saved to {Path(VOTING_MODEL_FILE).name}")
             
         except Exception as e:
             print(f"  [ERROR] Error training voting classifier: {e}")
@@ -255,6 +256,8 @@ class DRModelTrainer:
                 report = classification_report(
                     self.y_test, y_pred,
                     target_names=CLASS_NAMES,
+                    labels=list(range(len(CLASS_NAMES))),
+                    zero_division=0,
                     output_dict=False
                 )
                 
@@ -313,11 +316,11 @@ class DRModelTrainer:
                 print("="*60)
                 print("\n🚀 NEXT STEPS:")
                 print("   1. Generate demo data:")
-                print("      python generate_demo_data.py")
+                print("      python utils/generate_demo_data.py")
                 print("\n   2. Run training again:")
                 print("      python train_models.py")
                 print("\n   3. Read the complete guide:")
-                print("      See WORKING_WITHOUT_DATA.md")
+                print("      See docs/WORKING_WITHOUT_DATA.md")
                 print("\n" + "="*60)
                 return False
             
@@ -329,13 +332,13 @@ class DRModelTrainer:
             print("\n[SUCCESS] Training pipeline completed successfully!")
             print(f"Models saved in: {self.models_dir}")
             print(f"Reports saved in: {self.outputs_dir}")
-            print("\n📖 View results with: cat outputs/randomforest_report.txt")
+            print("\n📖 View results in: outputs/updated/")
             
             return True
         
         except Exception as e:
             print(f"\n[ERROR] Training pipeline failed: {e}")
-            print(f"\n[TIP] Try running: python generate_demo_data.py")
+            print(f"\n[TIP] Try running: python utils/generate_demo_data.py")
             return False
 
 

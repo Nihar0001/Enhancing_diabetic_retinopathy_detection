@@ -4,7 +4,6 @@ Generates synthetic training/test data for demonstration and testing purposes.
 """
 
 import numpy as np
-import os
 import sys
 from pathlib import Path
 

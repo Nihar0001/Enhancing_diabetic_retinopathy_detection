@@ -3,7 +3,6 @@ Configuration module for Diabetic Retinopathy Detection project.
 Manages paths, hyperparameters, and project settings.
 """
 
-import os
 from pathlib import Path
 
 # Get the project root directory
@@ -14,7 +13,7 @@ DATA_DIR = PROJECT_ROOT / "data"
 TRAIN_IMAGES_DIR = DATA_DIR / "train_images"
 TEST_IMAGES_DIR = DATA_DIR / "test_images"
 MODELS_DIR = PROJECT_ROOT / "models"
-OUTPUTS_DIR = PROJECT_ROOT / "outputs"
+OUTPUTS_DIR = PROJECT_ROOT / "outputs" / "updated"
 SCRIPTS_DIR = PROJECT_ROOT / "scripts"
 NOTEBOOKS_DIR = PROJECT_ROOT / "notebooks"
 
@@ -35,7 +34,7 @@ Y_TEST_FILE = DATA_DIR / "y_test.npy"
 # Model files
 RF_MODEL_FILE = MODELS_DIR / "randomforest_model.pkl"
 SVM_MODEL_FILE = MODELS_DIR / "svm_model.pkl"
-KNN_MODEL_FILE = MODELS_DIR / "knn_model.pkl"
+GB_MODEL_FILE = MODELS_DIR / "gradientboosting_model.pkl"
 VOTING_MODEL_FILE = MODELS_DIR / "votingclassifier_model.pkl"
 SCALER_FILE = MODELS_DIR / "scaler.pkl"
 
@@ -52,10 +51,6 @@ RANDOM_FOREST_N_JOBS = -1
 SVM_KERNEL = 'linear'
 SVM_RANDOM_STATE = 42
 SVM_PROBABILITY = True
-
-KNN_N_NEIGHBORS = 5
-
-VOTING_CLASSIFIER_VOTING = 'soft'
 
 # Train-test split
 TEST_SIZE = 0.2

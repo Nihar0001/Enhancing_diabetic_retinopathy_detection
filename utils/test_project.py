@@ -59,8 +59,7 @@ def test_config():
     try:
         from config import (
             PROJECT_ROOT, DATA_DIR, MODELS_DIR, OUTPUTS_DIR,
-            CLASS_NAMES, NUM_CLASSES, IMAGE_TARGET_SIZE,
-            create_directories, validate_paths
+            CLASS_NAMES, create_directories
         )
         
         print(f"  [OK] Configuration imported successfully")
@@ -85,16 +84,17 @@ def test_scripts_import():
     print_section("TEST 3: Scripts Module")
     
     try:
-        from scripts.preprocessing import preprocess_image, advanced_preprocess_image
+        import scripts.preprocessing as preprocessing_module
         print(f"  [OK] preprocessing module imported")
+        assert hasattr(preprocessing_module, 'preprocess_image')
         
-        from scripts.feature_extraction import (
-            extract_deep_features, extract_lbp, extract_haralick
-        )
+        import scripts.feature_extraction as feature_extraction_module
         print(f"  [OK] feature_extraction module imported")
+        assert hasattr(feature_extraction_module, 'extract_haralick')
         
-        from scripts.visualize import plot_normalized_confusion_matrix
+        import scripts.visualize as visualize_module
         print(f"  [OK] visualize module imported")
+        assert hasattr(visualize_module, 'plot_f1_scores')
         
         return True
     except Exception as e:
@@ -107,7 +107,7 @@ def test_data_generation():
     print_section("TEST 4: Demo Data Generation")
     
     try:
-        from generate_demo_data import generate_demo_data
+        from utils.generate_demo_data import generate_demo_data
         print(f"  [OK] Demo data generator imported")
         
         # Generate small demo dataset
@@ -136,10 +136,10 @@ def test_model_modules():
         print(f"  [OK] DRModelEvaluator class imported")
         
         # Check that classes have required methods
-        trainer = DRModelTrainer()
+        _trainer = DRModelTrainer()
         print(f"  [OK] DRModelTrainer instantiated")
         
-        evaluator = DRModelEvaluator()
+        _evaluator = DRModelEvaluator()
         print(f"  [OK] DRModelEvaluator instantiated")
         
         return True
@@ -153,7 +153,7 @@ def test_environment_setup():
     print_section("TEST 6: Environment Setup")
     
     try:
-        from setup_env import setup_project_paths, validate_environment
+        from utils.setup_env import setup_project_paths, validate_environment
         print(f"  [OK] setup_env module imported")
         
         project_root, scripts_path = setup_project_paths()
@@ -161,7 +161,7 @@ def test_environment_setup():
         print(f"    - Project root: {project_root}")
         print(f"    - Scripts path: {scripts_path}")
         
-        is_valid = validate_environment()
+        _is_valid = validate_environment()
         print(f"  [OK] Environment validated")
         
         return True
@@ -175,7 +175,7 @@ def test_training_pipeline():
     print_section("TEST 7: Training Pipeline (with demo data)")
     
     try:
-        from generate_demo_data import generate_demo_data
+        from utils.generate_demo_data import generate_demo_data
         from train_models import DRModelTrainer
         
         # Generate small demo dataset

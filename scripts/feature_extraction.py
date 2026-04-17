@@ -82,7 +82,6 @@ def extract_deep_features(img):
             
             # Suppress TensorFlow output
             try:
-                import tensorflow as tf
                 with tf.device('/CPU:0'):
                     features = model.predict(img, verbose=0)
             except:
@@ -93,7 +92,6 @@ def extract_deep_features(img):
             # Resize to target size if needed
             if len(flattened) != FALLBACK_SIZE:
                 # Simple pooling or padding to match expected size
-                from scipy import ndimage
                 if len(flattened) > FALLBACK_SIZE:
                     # Average pooling: downsample
                     step = len(flattened) / FALLBACK_SIZE

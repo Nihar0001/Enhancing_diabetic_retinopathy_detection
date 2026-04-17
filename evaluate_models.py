@@ -3,26 +3,30 @@ Model Evaluation and Comparison Script
 Loads trained models and evaluates them against test data.
 """
 
-import os
 import sys
 import numpy as np
 import joblib
 from pathlib import Path
 import warnings
 
+if sys.stdout.encoding and sys.stdout.encoding.lower() != 'utf-8':
+    reconfigure_fn = getattr(sys.stdout, 'reconfigure', None)
+    if callable(reconfigure_fn):
+        reconfigure_fn(encoding='utf-8')
+
 sys.path.insert(0, str(Path(__file__).parent / 'scripts'))
 
 from config import (
-    DATA_DIR, MODELS_DIR, OUTPUTS_DIR, CLASS_NAMES,
+    OUTPUTS_DIR, CLASS_NAMES,
     X_TEST_SCALED_FILE, Y_TEST_FILE,
-    RF_MODEL_FILE, SVM_MODEL_FILE, KNN_MODEL_FILE,
+    RF_MODEL_FILE, SVM_MODEL_FILE, GB_MODEL_FILE,
     VOTING_MODEL_FILE
 )
 
 from sklearn.metrics import (
     classification_report, confusion_matrix,
     accuracy_score, f1_score, precision_score,
-    recall_score, roc_auc_score
+    recall_score
 )
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -39,7 +43,7 @@ class DRModelEvaluator:
         self.models_to_load = {
             'RandomForest': RF_MODEL_FILE,
             'SVM': SVM_MODEL_FILE,
-            'KNN': KNN_MODEL_FILE,
+            'GradientBoosting': GB_MODEL_FILE,
             'VotingClassifier': VOTING_MODEL_FILE
         }
         
@@ -54,14 +58,14 @@ class DRModelEvaluator:
             self.X_test_scaled = np.load(str(X_TEST_SCALED_FILE))
             self.y_test = np.load(str(Y_TEST_FILE))
             
-            print(f"  ✓ Test data loaded")
+            print(f"  [OK] Test data loaded")
             print(f"    X_test_scaled shape: {self.X_test_scaled.shape}")
             print(f"    y_test shape: {self.y_test.shape}")
             
             return True
         
         except FileNotFoundError as e:
-            print(f"  ✗ Error: {e}")
+            print(f"  [ERROR] Error: {e}")
             return False
     
     def load_models(self):
@@ -73,12 +77,12 @@ class DRModelEvaluator:
                 if model_path.exists():
                     model = joblib.load(str(model_path))
                     self.results[name] = {'model': model}
-                    print(f"  ✓ {name} loaded from {model_path.name}")
+                    print(f"  [OK] {name} loaded from {model_path.name}")
                 else:
-                    print(f"  ⚠ {name} not found at {model_path}")
+                    print(f"  [WARN] {name} not found at {model_path}")
             
             except Exception as e:
-                print(f"  ✗ Error loading {name}: {e}")
+                print(f"  [ERROR] Error loading {name}: {e}")
     
     def evaluate_models(self):
         """Evaluate all loaded models."""
@@ -120,6 +124,7 @@ class DRModelEvaluator:
                 data['classification_report'] = classification_report(
                     self.y_test, y_pred,
                     target_names=CLASS_NAMES,
+                    labels=list(range(len(CLASS_NAMES))),
                     zero_division=0
                 )
                 
@@ -130,7 +135,7 @@ class DRModelEvaluator:
                 print(f"    F1-Score:  {f1:.4f}")
             
             except Exception as e:
-                print(f"  ✗ Error evaluating {name}: {e}")
+                print(f"  [ERROR] Error evaluating {name}: {e}")
     
     def plot_comparison(self):
         """Create comparison visualizations."""
@@ -149,11 +154,11 @@ class DRModelEvaluator:
                     f1_scores.append(data['f1_score'])
             
             if not names:
-                print("  ⚠ No models to visualize")
+                print("  [WARN] No models to visualize")
                 return
             
             # Create comparison plot
-            fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+            _, axes = plt.subplots(1, 2, figsize=(14, 5))
             
             # Accuracy comparison
             axes[0].bar(names, accuracies, color='steelblue', alpha=0.7)
@@ -178,11 +183,11 @@ class DRModelEvaluator:
             # Save figure
             comparison_path = OUTPUTS_DIR / 'model_comparison.png'
             plt.savefig(str(comparison_path), dpi=300, bbox_inches='tight')
-            print(f"  ✓ Comparison plot saved to {comparison_path.name}")
+            print(f"  [OK] Comparison plot saved to {comparison_path.name}")
             plt.close()
         
         except Exception as e:
-            print(f"  ✗ Error creating visualizations: {e}")
+            print(f"  [ERROR] Error creating visualizations: {e}")
     
     def plot_confusion_matrices(self):
         """Plot confusion matrices for all models."""
@@ -192,10 +197,10 @@ class DRModelEvaluator:
             n_models = len([d for d in self.results.values() if 'confusion_matrix' in d])
             
             if n_models == 0:
-                print("  ⚠ No models to visualize")
+                print("  [WARN] No models to visualize")
                 return
             
-            fig, axes = plt.subplots(2, 2, figsize=(14, 12))
+            _, axes = plt.subplots(2, 2, figsize=(14, 12))
             axes = axes.flatten()
             
             for idx, (name, data) in enumerate(self.results.items()):
@@ -232,11 +237,11 @@ class DRModelEvaluator:
             # Save figure
             cm_path = OUTPUTS_DIR / 'confusion_matrices.png'
             plt.savefig(str(cm_path), dpi=300, bbox_inches='tight')
-            print(f"  ✓ Confusion matrices saved to {cm_path.name}")
+            print(f"  [OK] Confusion matrices saved to {cm_path.name}")
             plt.close()
         
         except Exception as e:
-            print(f"  ✗ Error creating confusion matrices: {e}")
+            print(f"  [ERROR] Error creating confusion matrices: {e}")
     
     def print_summary(self):
         """Print evaluation summary."""
@@ -265,7 +270,7 @@ class DRModelEvaluator:
         # Print best model
         if sorted_results:
             best_name, best_data = sorted_results[0]
-            print(f"\n🏆 Best Model: {best_name}")
+            print(f"\n[BEST] Best Model: {best_name}")
             print(f"   Accuracy: {best_data['accuracy']:.4f}")
             print(f"   F1-Score: {best_data['f1_score']:.4f}")
     

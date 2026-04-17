@@ -8,12 +8,12 @@ import pandas as pd
 
 DATA_PATH = './data/'
 MODELS_PATH = './models/'
-OUTPUTS_PATH = './outputs/'
+OUTPUTS_PATH = './outputs/updated/'
 
 # Define the models to load
-model_names = ['knn', 'randomforest', 'svm', 'votingclassifier']
+model_names = ['gradientboosting', 'randomforest', 'svm', 'votingclassifier']
 model_filenames = {
-    'knn': 'knn_model.pkl',
+    'gradientboosting': 'gradientboosting_model.pkl',
     'randomforest': 'randomforest_model.pkl',
     'svm': 'svm_model.pkl',
     'votingclassifier': 'votingclassifier_model.pkl'
@@ -71,7 +71,6 @@ plt.tight_layout()
 accuracy_bar_chart_path = os.path.join(OUTPUTS_PATH, 'model_accuracy_bar_chart.png')
 plt.savefig(accuracy_bar_chart_path)
 print(f"\nSaved Model Accuracy Bar Chart to {accuracy_bar_chart_path}")
-plt.show()
 
 # Visualization 2: Radar Chart for Multi-Metric Comparison
 
@@ -131,7 +130,6 @@ if radar_data:
     radar_chart_path = os.path.join(OUTPUTS_PATH, 'model_radar_chart.png')
     plt.savefig(radar_chart_path)
     print(f"Saved Multi-Metric Radar Chart to {radar_chart_path}")
-    plt.show()
 
 else:
     print("Could not generate radar chart as no model reports were available.")

@@ -6,8 +6,8 @@ from pathlib import Path
 
 # Navigate relative to project root
 _project_root = str(Path(__file__).resolve().parent.parent)
+sys.path.insert(0, _project_root)
 os.chdir(os.path.join(_project_root, 'notebooks'))
-sys.path.append(os.path.join(_project_root, 'scripts'))
 
 try:
     # Load labels to verify data
@@ -26,9 +26,8 @@ try:
         print(f"[ERROR] Directory not found: {images_dir}")
     
     # Test imports
-    from preprocessing import preprocess_image
-    from feature_extraction import extract_deep_features, extract_lbp, extract_haralick
-    from visualize import plot_normalized_confusion_matrix
+    from scripts.preprocessing import preprocess_image
+    from scripts.feature_extraction import extract_deep_features, extract_lbp, extract_haralick
     print("[OK] All imports successful")
     
     # Test preprocessing on a sample image
