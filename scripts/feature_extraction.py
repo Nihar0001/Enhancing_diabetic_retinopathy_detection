@@ -178,3 +178,46 @@ def extract_haralick(img_gray):
     except Exception as e:
         print(f"[ERROR] Failed to extract Haralick features: {e}")
         raise
+
+
+def extract_features(img, img_gray):
+    """
+    Extracts all features from an image (deep + LBP + Haralick).
+    Combines into a single 595-dimensional feature vector.
+    
+    Args:
+        img (np.ndarray): Color image array (for deep features)
+        img_gray (np.ndarray): Grayscale image array (for texture features)
+        
+    Returns:
+        np.ndarray: 595-dimensional feature vector (512 + 59 + 24)
+        
+    Raises:
+        ValueError: If images are None or empty
+    """
+    if img is None or img_gray is None:
+        raise ValueError("Images cannot be None")
+    
+    try:
+        # Extract each type of features
+        deep_feats = extract_deep_features(img)        # 512 dims
+        lbp_feats = extract_lbp(img_gray)             # 59 dims
+        haralick_feats = extract_haralick(img_gray)   # 24 dims
+        
+        # Ensure each feature type is the expected shape
+        deep_feats = np.asarray(deep_feats, dtype=np.float32).flatten()
+        lbp_feats = np.asarray(lbp_feats, dtype=np.float32).flatten()
+        haralick_feats = np.asarray(haralick_feats, dtype=np.float32).flatten()
+        
+        # Concatenate all features into single vector (595 dims)
+        combined_features = np.concatenate([
+            deep_feats,      # 512 dims
+            lbp_feats,       # 59 dims
+            haralick_feats   # 24 dims
+        ])
+        
+        return combined_features.astype(np.float32)
+        
+    except Exception as e:
+        print(f"[ERROR] Failed to extract combined features: {e}")
+        raise

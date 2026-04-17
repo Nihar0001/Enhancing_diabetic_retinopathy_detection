@@ -1,348 +1,184 @@
 """
-Improved Model Training Pipeline for Diabetic Retinopathy Detection
+Quick Model Retraining Script
 
-This script handles the complete training pipeline with:
-- Proper path management using config.py
-- Enhanced error handling
-- Better model evaluation
-- Progress tracking
+Loads real images, extracts features, and trains models.
+Works with real data in data/train_images/ and data/test_images/
+
+NOTE: For first-time setup, use the Jupyter notebook:
+  notebooks/hybrid_dr_detection.ipynb
 """
 
-import sys
 import numpy as np
 import joblib
-import warnings
+import sys
+import os
 from pathlib import Path
-
-# Setup paths
-sys.path.insert(0, str(Path(__file__).parent / 'scripts'))
-
-from config import (
-    PROJECT_ROOT, DATA_DIR, MODELS_DIR, OUTPUTS_DIR,
-    X_TRAIN_FILE, X_TEST_FILE, Y_TRAIN_FILE, Y_TEST_FILE,
-    X_TRAIN_SCALED_FILE, X_TEST_SCALED_FILE,
-    RF_MODEL_FILE, SVM_MODEL_FILE, GB_MODEL_FILE,
-    VOTING_MODEL_FILE,
-    CLASS_NAMES, RANDOM_STATE,
-    RANDOM_FOREST_N_ESTIMATORS, SVM_KERNEL,
-    create_directories, validate_paths
-)
-
-from sklearn.ensemble import RandomForestClassifier, VotingClassifier
+from sklearn.ensemble import RandomForestClassifier, VotingClassifier, HistGradientBoostingClassifier
 from sklearn.svm import SVC
-from sklearn.ensemble import HistGradientBoostingClassifier
-from sklearn.metrics import (
-    classification_report, confusion_matrix, 
-    accuracy_score, f1_score
+from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.preprocessing import StandardScaler
+
+# Add scripts to path
+sys.path.insert(0, "scripts")
+from preprocessing import preprocess_image
+from feature_extraction import extract_features
+
+print("\n" + "="*60)
+print("REAL DATA MODEL TRAINING")
+print("="*60)
+
+# Define paths
+train_images_dir = Path("data/train_images")
+test_images_dir = Path("data/test_images")
+
+# Check if pre-extracted features exist
+features_exist = (
+    Path("data/X_train.npy").exists() and
+    Path("data/X_test.npy").exists() and
+    Path("data/y_train.npy").exists() and
+    Path("data/y_test.npy").exists()
 )
-warnings.filterwarnings('ignore')
 
-
-class DRModelTrainer:
-    """Handles the complete diabetic retinopathy model training pipeline."""
+if features_exist:
+    print("\n✓ Loading pre-extracted features from data/")
+    X_train = np.load("data/X_train.npy")
+    y_train = np.load("data/y_train.npy")
+    X_test = np.load("data/X_test.npy")
+    y_test = np.load("data/y_test.npy")
+    X_train_scaled = np.load("data/X_train_scaled.npy")
+    X_test_scaled = np.load("data/X_test_scaled.npy")
+else:
+    print("\n✓ Extracting features from real images...")
     
-    def __init__(self):
-        """Initialize the trainer with configuration."""
-        self.project_root = PROJECT_ROOT
-        self.data_dir = DATA_DIR
-        self.models_dir = MODELS_DIR
-        self.outputs_dir = OUTPUTS_DIR
-        
-        # Create necessary directories
-        create_directories()
-        
-        # Validate paths
-        if not validate_paths():
-            print("[WARNING] Some data files might be missing")
-        
-        self.classifiers = {}
-        self.results = {}
-        
-        print("\n" + "="*60)
-        print("DIABETIC RETINOPATHY MODEL TRAINER")
-        print("="*60)
-        print(f"Project Root: {self.project_root}")
-        print(f"Data Directory: {self.data_dir}")
-        print(f"Models Directory: {self.models_dir}")
-        print("="*60 + "\n")
+    if not train_images_dir.exists():
+        print(f"\n✗ ERROR: {train_images_dir} not found!")
+        print("  Please organize your data as:")
+        print("    data/train_images/0/")
+        print("    data/train_images/1/")
+        print("    data/train_images/2/")
+        print("    data/train_images/3/")
+        print("    data/train_images/4/")
+        exit(1)
     
-    def load_data(self):
-        """Load training and testing data."""
-        print("[STEP 1] Loading data...")
-        try:
-            # Check if data files exist
-            missing_files = []
-            required_files = {
-                'X_train.npy': X_TRAIN_FILE,
-                'X_test.npy': X_TEST_FILE,
-                'y_train.npy': Y_TRAIN_FILE,
-                'y_test.npy': Y_TEST_FILE,
-                'X_train_scaled.npy': X_TRAIN_SCALED_FILE,
-                'X_test_scaled.npy': X_TEST_SCALED_FILE,
-            }
-            
-            for name, path in required_files.items():
-                if not path.exists():
-                    missing_files.append(name)
-            
-            if missing_files:
-                print(f"\n  ✗ Missing data files:")
-                for f in missing_files:
-                    print(f"    - {f}")
-                print(f"\n  📋 SOLUTION: Generate demo data first!")
-                print(f"     Run: python utils/generate_demo_data.py")
-                print(f"\n     After that, run this script again.")
-                print(f"\n     📖 See docs/WORKING_WITHOUT_DATA.md for complete guide")
-                return False
-            
-            # Load the data
-            print(f"  Loading scaled data...")
-            self.X_train_scaled = np.load(str(X_TRAIN_SCALED_FILE))
-            self.X_test_scaled = np.load(str(X_TEST_SCALED_FILE))
-            self.X_train = np.load(str(X_TRAIN_FILE))
-            self.X_test = np.load(str(X_TEST_FILE))
-            self.y_train = np.load(str(Y_TRAIN_FILE))
-            self.y_test = np.load(str(Y_TEST_FILE))
-            
-            print(f"  [OK] X_train_scaled shape: {self.X_train_scaled.shape}")
-            print(f"  [OK] X_test_scaled shape: {self.X_test_scaled.shape}")
-            print(f"  [OK] y_train shape: {self.y_train.shape}")
-            print(f"  [OK] y_test shape: {self.y_test.shape}")
-            print(f"  [OK] Unique classes in y_test: {np.unique(self.y_test)}")
-            
-            return True
-        
-        except Exception as e:
-            print(f"  [ERROR] Error loading data: {e}")
-            print(f"\n  📋 TROUBLESHOOTING:")
-            print(f"     1. Generate demo data: python utils/generate_demo_data.py")
-            print(f"     2. Check file shapes are correct (n_samples, 595)")
-            print(f"     3. Check labels are in range 0-4")
-            print(f"\n     📖 See docs/WORKING_WITHOUT_DATA.md for help")
-            return False
+    # Load training images
+    print("  Loading training images...")
+    X_train = []
+    y_train = []
     
-    def train_individual_models(self):
-        """Train individual classifiers."""
-        print("\n[STEP 2] Training individual models...")
+    for class_idx in range(5):
+        class_dir = train_images_dir / str(class_idx)
+        if not class_dir.exists():
+            continue
         
-        if not hasattr(self, 'X_train_scaled'):
-            print("  [ERROR] Data not loaded. Skipping model training.")
-            return
+        image_files = list(class_dir.glob("*.jpg")) + list(class_dir.glob("*.png")) + list(class_dir.glob("*.jpeg"))
         
-        # Define classifiers
-        self.classifiers = {
-            "RandomForest": RandomForestClassifier(
-                n_estimators=RANDOM_FOREST_N_ESTIMATORS,
-                random_state=RANDOM_STATE,
-                n_jobs=-1,
-                class_weight='balanced',
-                verbose=0  # Changed to 0 to reduce output
-            ),
-            "SVM": SVC(
-                kernel=SVM_KERNEL,
-                probability=True,
-                cache_size=2000,
-                random_state=RANDOM_STATE,
-                class_weight='balanced',
-                verbose=0  # Changed to 0
-            ),
-            "GradientBoosting": HistGradientBoostingClassifier(
-                random_state=RANDOM_STATE
-            ),
-        }
-        
-        for name, clf in self.classifiers.items():
-            print(f"\n  Training {name}...")
-            
+        for img_path in image_files:
             try:
-                # Use scaled data for SVM and GradientBoosting, unscaled for RandomForest
-                if name in ["SVM", "GradientBoosting"]:
-                    X_train = self.X_train_scaled
-                    X_test = self.X_test_scaled
-                else:
-                    X_train = self.X_train
-                    X_test = self.X_test
-                
-                # Train model
-                clf.fit(X_train, self.y_train)
-                
-                # Predict
-                y_pred = clf.predict(X_test)
-                
-                # Evaluate
-                accuracy = accuracy_score(self.y_test, y_pred)
-                f1_weighted = f1_score(self.y_test, y_pred, average='weighted')
-                
-                print(f"    [OK] Accuracy: {accuracy:.4f}")
-                print(f"    [OK] F1-Score (weighted): {f1_weighted:.4f}")
-                
-                # Store results
-                self.results[name] = {
-                    'model': clf,
-                    'accuracy': accuracy,
-                    'f1_score': f1_weighted,
-                    'predictions': y_pred,
-                    'cm': confusion_matrix(self.y_test, y_pred)
-                }
-                
-                # Save model
-                model_path = {
-                    'RandomForest': RF_MODEL_FILE,
-                    'SVM': SVM_MODEL_FILE,
-                    'GradientBoosting': GB_MODEL_FILE
-                }[name]
-                
-                joblib.dump(clf, str(model_path))
-                print(f"    [OK] Model saved to {model_path.name}")
-                
+                img, img_gray = preprocess_image(str(img_path))
+                features = extract_features(img, img_gray)
+                X_train.append(features)
+                y_train.append(class_idx)
             except Exception as e:
-                print(f"    [ERROR] Error training {name}: {e}")
-                print(f"       Continuing with other models...")
-                continue
+                print(f"    ⚠️  Error: {img_path.name}: {e}")
     
-    def train_voting_classifier(self):
-        """Train the ensemble voting classifier."""
-        print("\n[STEP 3] Training Voting Classifier...")
-        
-        try:
-            voting_clf = VotingClassifier(
-                estimators=[
-                    ('rf', self.classifiers['RandomForest']),
-                    ('svm', self.classifiers['SVM']),
-                    ('gb', self.classifiers['GradientBoosting'])
-                ],
-                voting='soft',
-                n_jobs=-1
-            )
-            
-            # Train on scaled data (SVM and GB need it)
-            voting_clf.fit(self.X_train_scaled, self.y_train)
-            
-            # Predict
-            y_pred = voting_clf.predict(self.X_test_scaled)
-            
-            # Evaluate
-            accuracy = accuracy_score(self.y_test, y_pred)
-            f1_weighted = f1_score(self.y_test, y_pred, average='weighted')
-            
-            print(f"  [OK] Voting Classifier Accuracy: {accuracy:.4f}")
-            print(f"  [OK] Voting Classifier F1-Score: {f1_weighted:.4f}")
-            
-            # Store results
-            self.results['VotingClassifier'] = {
-                'model': voting_clf,
-                'accuracy': accuracy,
-                'f1_score': f1_weighted,
-                'predictions': y_pred,
-                'cm': confusion_matrix(self.y_test, y_pred)
-            }
-            
-            # Save model
-            joblib.dump(voting_clf, str(VOTING_MODEL_FILE))
-            print(f"  [OK] Model saved to {Path(VOTING_MODEL_FILE).name}")
-            
-        except Exception as e:
-            print(f"  [ERROR] Error training voting classifier: {e}")
+    X_train = np.array(X_train, dtype=np.float32)
+    y_train = np.array(y_train)
     
-    def generate_reports(self):
-        """Generate classification reports."""
-        print("\n[STEP 4] Generating reports...")
+    # Load test images
+    print("  Loading test images...")
+    X_test = []
+    y_test = []
+    
+    for class_idx in range(5):
+        class_dir = test_images_dir / str(class_idx)
+        if not class_dir.exists():
+            continue
         
-        for name, result in self.results.items():
+        image_files = list(class_dir.glob("*.jpg")) + list(class_dir.glob("*.png")) + list(class_dir.glob("*.jpeg"))
+        
+        for img_path in image_files:
             try:
-                y_pred = result['predictions']
-                
-                # Classification report
-                report = classification_report(
-                    self.y_test, y_pred,
-                    target_names=CLASS_NAMES,
-                    labels=list(range(len(CLASS_NAMES))),
-                    zero_division=0,
-                    output_dict=False
-                )
-                
-                print(f"\n  {name} Classification Report:")
-                print(report)
-                
-                # Save report
-                report_file = self.outputs_dir / f"{name.lower()}_report.txt"
-                with open(str(report_file), 'w') as f:
-                    f.write(f"Classification Report for {name}\n")
-                    f.write("="*60 + "\n")
-                    f.write(report)
-                    f.write("\n" + "="*60 + "\n")
-                    f.write(f"Accuracy: {result['accuracy']:.4f}\n")
-                    f.write(f"F1-Score (weighted): {result['f1_score']:.4f}\n")
-                
-                print(f"  [OK] Report saved to {report_file.name}")
-                
+                img, img_gray = preprocess_image(str(img_path))
+                features = extract_features(img, img_gray)
+                X_test.append(features)
+                y_test.append(class_idx)
             except Exception as e:
-                print(f"  [ERROR] Error generating report for {name}: {e}")
+                print(f"    ⚠️  Error: {img_path.name}: {e}")
     
-    def print_summary(self):
-        """Print training summary."""
-        if not self.results:
-            print("\n" + "="*60)
-            print("NO TRAINING RESULTS")
-            print("="*60)
-            print("No models were successfully trained.")
-            print("="*60)
-            return
-        
-        print("\n" + "="*60)
-        print("TRAINING SUMMARY")
-        print("="*60)
-        
-        # Sort models by accuracy
-        sorted_results = sorted(
-            self.results.items(),
-            key=lambda x: x[1]['accuracy'],
-            reverse=True
-        )
-        
-        for rank, (name, result) in enumerate(sorted_results, 1):
-            print(f"{rank}. {name}")
-            print(f"   Accuracy: {result['accuracy']:.4f}")
-            print(f"   F1-Score: {result['f1_score']:.4f}")
-        
-        print("="*60)
+    X_test = np.array(X_test, dtype=np.float32)
+    y_test = np.array(y_test)
     
-    def run(self):
-        """Run the complete training pipeline."""
-        try:
-            if not self.load_data():
-                print("\n" + "="*60)
-                print("DATA LOADING FAILED")
-                print("="*60)
-                print("\n🚀 NEXT STEPS:")
-                print("   1. Generate demo data:")
-                print("      python utils/generate_demo_data.py")
-                print("\n   2. Run training again:")
-                print("      python train_models.py")
-                print("\n   3. Read the complete guide:")
-                print("      See docs/WORKING_WITHOUT_DATA.md")
-                print("\n" + "="*60)
-                return False
-            
-            self.train_individual_models()
-            self.train_voting_classifier()
-            self.generate_reports()
-            self.print_summary()
-            
-            print("\n[SUCCESS] Training pipeline completed successfully!")
-            print(f"Models saved in: {self.models_dir}")
-            print(f"Reports saved in: {self.outputs_dir}")
-            print("\n📖 View results in: outputs/updated/")
-            
-            return True
-        
-        except Exception as e:
-            print(f"\n[ERROR] Training pipeline failed: {e}")
-            print(f"\n[TIP] Try running: python utils/generate_demo_data.py")
-            return False
+    # Scale features
+    scaler = StandardScaler()
+    X_train_scaled = scaler.fit_transform(X_train)
+    X_test_scaled = scaler.transform(X_test)
+    
+    # Save for future use
+    os.makedirs("data", exist_ok=True)
+    np.save("data/X_train.npy", X_train)
+    np.save("data/X_test.npy", X_test)
+    np.save("data/y_train.npy", y_train)
+    np.save("data/y_test.npy", y_test)
+    np.save("data/X_train_scaled.npy", X_train_scaled)
+    np.save("data/X_test_scaled.npy", X_test_scaled)
+    joblib.dump(scaler, "data/scaler.pkl")
+    print("  ✓ Features extracted and saved")
 
+# Create directories
+os.makedirs("models", exist_ok=True)
+os.makedirs("outputs/updated", exist_ok=True)
 
-if __name__ == "__main__":
-    trainer = DRModelTrainer()
-    success = trainer.run()
-    sys.exit(0 if success else 1)
+# Train models
+classifiers = {
+    "RandomForest": (RandomForestClassifier(n_estimators=100, random_state=42, class_weight="balanced"),
+                    X_train, X_test),
+    "SVM": (SVC(kernel="linear", probability=True, cache_size=2000, random_state=42, class_weight="balanced"),
+           X_train_scaled, X_test_scaled),
+    "GradientBoosting": (HistGradientBoostingClassifier(random_state=42),
+                        X_train_scaled, X_test_scaled),
+}
+
+print("\nTraining models...")
+for name, (clf, X_tr, X_te) in classifiers.items():
+    print(f"  {name}...", end=" ")
+    clf.fit(X_tr, y_train)
+    y_pred = clf.predict(X_te)
+    
+    joblib.dump(clf, f"models/{name.lower()}_model.pkl")
+    
+    with open(f"outputs/updated/{name.lower()}_report.txt", "w") as f:
+        report = classification_report(y_test, y_pred)
+        cm = confusion_matrix(y_test, y_pred)
+        f.write(f"Classification Report for {name}:\n{report}")
+        f.write(f"\nConfusion Matrix:\n{np.array2string(cm)}\n")
+    
+    print("✓")
+
+# Train VotingClassifier
+print("  VotingClassifier...", end=" ")
+clf1 = joblib.load("models/randomforest_model.pkl")
+clf2 = joblib.load("models/svm_model.pkl")
+clf3 = joblib.load("models/gradientboosting_model.pkl")
+
+voting_clf = VotingClassifier(
+    estimators=[('rf', clf1), ('svm', clf2), ('gb', clf3)],
+    voting='soft',
+    n_jobs=-1
+)
+voting_clf.fit(X_train_scaled, y_train)
+y_pred_voting = voting_clf.predict(X_test_scaled)
+
+joblib.dump(voting_clf, "models/votingclassifier_model.pkl")
+
+with open("outputs/updated/votingclassifier_report.txt", "w") as f:
+    report = classification_report(y_test, y_pred_voting)
+    cm = confusion_matrix(y_test, y_pred_voting)
+    f.write(f"Classification Report for VotingClassifier:\n{report}")
+    f.write(f"\nConfusion Matrix:\n{np.array2string(cm)}\n")
+
+print("✓")
+
+print("\n" + "="*60)
+print("✓ Training complete!")
+print("  Check: models/ and outputs/updated/")
+print("="*60 + "\n")
