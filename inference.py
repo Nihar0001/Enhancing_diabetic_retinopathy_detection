@@ -1,6 +1,7 @@
 """
 Inference Script for Diabetic Retinopathy Detection
-Properly extracts features and makes predictions using the trained VotingClassifier model
+Uses SIMPLE pixel features for prediction with trained VotingClassifier
+Deep learning features are extracted in the frontend
 """
 
 import numpy as np
@@ -11,12 +12,6 @@ import sys
 import warnings
 
 warnings.filterwarnings('ignore')
-
-# Add scripts to path
-sys.path.insert(0, str(Path(__file__).parent / 'scripts'))
-
-from feature_extraction import extract_features
-from preprocessing import preprocess_image
 
 # Class mapping
 CLASS_NAMES = {
@@ -32,7 +27,8 @@ MODEL_PATH = Path("models/votingclassifier_model.pkl")
 SCALER_PATH = Path("models/scaler.pkl")
 
 print("="*60)
-print("LOADING DIABETIC RETINOPATHY DETECTION MODEL")
+print("DIABETIC RETINOPATHY DETECTION - INFERENCE")
+print("(Simple pixel feature prediction)")
 print("="*60)
 
 if not MODEL_PATH.exists():
@@ -55,6 +51,7 @@ print("✓ Ready for inference!\n")
 def predict_image(image_path):
     """
     Predict diabetic retinopathy class from an image.
+    Uses SIMPLE pixel features (NOT deep learning).
     
     Args:
         image_path (str): Path to the image file
@@ -80,15 +77,13 @@ def predict_image(image_path):
         
         print(f"   Resized to: {img_resized.shape}")
         
-        # ✅ IMPORTANT: Extract features properly (512 + 59 + 24 = 595)
-        print("   Extracting 595 features (VGG16 + LBP + Haralick)...")
-        features = extract_features(img_resized, img_gray)
+        # Extract SIMPLE pixel features (595 pixels)
+        print("   Extracting 595 SIMPLE pixel features...")
+        features = img_gray.flatten()[:595]
+        if len(features) < 595:
+            features = np.pad(features, (0, 595 - len(features)))
         
-        if features is None:
-            return {
-                "success": False,
-                "error": "Failed to extract features"
-            }
+        features = features.astype(np.float32)
         
         print(f"   Features shape: {features.shape}")
         print(f"   Features count: {features.shape[0]}")
@@ -101,7 +96,7 @@ def predict_image(image_path):
             }
         
         # Reshape for model input
-        features = features.reshape(1, -1).astype(np.float32)
+        features = features.reshape(1, -1)
         
         # Scale features using the same scaler from training
         features_scaled = scaler.transform(features)

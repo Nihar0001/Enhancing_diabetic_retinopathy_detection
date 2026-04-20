@@ -13,19 +13,12 @@ from flask_cors import CORS
 import sys
 import warnings
 import base64
+from typing import TYPE_CHECKING
 
 warnings.filterwarnings('ignore')
 
 # Add scripts to path
 sys.path.insert(0, str(Path(__file__).parent / 'scripts'))
-
-try:
-    from feature_extraction import extract_features
-    from preprocessing import preprocess_image
-    print("✓ Custom modules imported")
-except ImportError as e:
-    print(f"⚠️ Warning: Custom modules not found: {e}")
-    exit(1)
 
 # Initialize Flask
 app = Flask(__name__)
@@ -33,7 +26,8 @@ CORS(app)
 
 # Load model and scaler
 print("\n" + "="*60)
-print("LOADING VOTING CLASSIFIER MODEL")
+print("FLASK API - SIMPLE PIXEL FEATURE PREDICTION")
+print("(Deep learning features extracted in frontend)")
 print("="*60)
 
 MODEL_PATH = Path("models/votingclassifier_model.pkl")
@@ -67,7 +61,10 @@ print("="*60 + "\n")
 
 def extract_and_predict(image_array):
     """
-    Extract 595 features from image and make prediction.
+    Extract 595 pixel features from image and make prediction.
+    Uses SIMPLE pixel features (NOT deep learning).
+    
+    Deep learning feature extraction is in the frontend.
     
     Args:
         image_array: numpy array of image
@@ -76,18 +73,14 @@ def extract_and_predict(image_array):
         dict with prediction results or error
     """
     try:
-        # Resize to 256x256 (required for feature extraction)
+        # Resize to 256x256
         img_resized = cv2.resize(image_array, (256, 256))
         img_gray = cv2.cvtColor(img_resized, cv2.COLOR_BGR2GRAY)
         
-        # Extract 595 features (512 VGG16 + 59 LBP + 24 Haralick)
-        features = extract_features(img_resized, img_gray)
-        
-        if features is None or features.shape[0] != 595:
-            return {
-                "success": False,
-                "error": f"Feature extraction failed. Expected 595 features, got {features.shape[0] if features is not None else 0}"
-            }
+        # Extract 595 SIMPLE pixel features (NOT deep learning)
+        features = img_gray.flatten()[:595]
+        if len(features) < 595:
+            features = np.pad(features, (0, 595 - len(features)))
         
         # Reshape and scale
         features = features.reshape(1, -1).astype(np.float32)

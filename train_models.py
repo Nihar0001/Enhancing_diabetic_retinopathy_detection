@@ -1,8 +1,8 @@
 """
-Quick Model Retraining Script
+Model Retraining Script (Simple Pixel Feature Pipeline)
 
-Loads real images from flat directories, matches labels from CSV, extracts features, and trains models.
-Works with real data in data/train_images/ and data/test_images/
+Loads real images, extracts simple 595-dimensional grayscale pixel features,
+and trains ensemble models.
 
 Data structure:
   data/train_images/ - flat directory with PNG files
@@ -10,8 +10,7 @@ Data structure:
   data/test_images/ - flat directory with PNG files
   data/test.csv - contains id_code (unlabeled)
 
-NOTE: For first-time setup, use the Jupyter notebook:
-  notebooks/hybrid_dr_detection_fixed.ipynb
+Features extracted: 595-dimensional (grayscale pixel vector)
 """
 
 import numpy as np
@@ -29,17 +28,9 @@ from sklearn.preprocessing import StandardScaler
 # Add scripts to path
 sys.path.insert(0, "scripts")
 
-# Import custom modules (dynamic path)
-try:
-    from preprocessing import preprocess_image  # type: ignore
-    from feature_extraction import extract_features  # type: ignore
-except ImportError:
-    preprocess_image = None  # type: ignore
-    extract_features = None  # type: ignore
-    print("⚠️ Warning: Custom modules not found. Will use fallback feature extraction.")
-
 print("\n" + "="*60)
-print("REAL DATA MODEL TRAINING")
+print("MODEL TRAINING - SIMPLE PIXEL FEATURES")
+print("(Deep learning feature extraction is in frontend)")
 print("="*60)
 
 # Define paths
@@ -72,21 +63,22 @@ if features_exist:
     print(f"  X_train: {X_train.shape}, y_train: {y_train.shape}")
     print(f"  X_test: {X_test.shape}, y_test: {y_test.shape}")
 else:
-    print("\n✓ Extracting features from real images...")
+    print("\n✓ Extracting SIMPLE pixel features from real images...")
+    print("  (Deep learning features are extracted in frontend)")
     
     if not train_images_dir.exists():
-        print(f"\n✗ ERROR: {train_images_dir} not found!")
-        print("  Please download data from:")
-        print("  https://www.kaggle.com/competitions/diabetic-retinopathy-detection")
+        print(f"\n❌ ERROR: {train_images_dir} not found!")
+        print("   Please download data from:")
+        print("   https://www.kaggle.com/competitions/diabetic-retinopathy-detection")
         exit(1)
     
     # Load training images
-    print("  Loading training images...")
+    print("  📷 Loading training images and extracting 595 pixel features...")
     X_train_list = []
     y_train_list = []
     
     for idx, row in train_csv.iterrows():
-        if idx % 500 == 0:
+        if idx % 100 == 0:
             print(f"    Processing {idx}/{len(train_csv)}...")
         
         img_id = row['id_code']
@@ -97,30 +89,37 @@ else:
             continue
         
         try:
+            # Read image
             img = cv2.imread(str(img_path))
             if img is None:
                 continue
-            img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-            img_resized = cv2.resize(img_gray, (256, 256))
-            features = img_resized.flatten()[:595]
+            
+            # Resize to 256×256
+            img_resized = cv2.resize(img, (256, 256))
+            img_gray = cv2.cvtColor(img_resized, cv2.COLOR_BGR2GRAY)
+            
+            # Extract SIMPLE pixel features (595 pixels)
+            features = img_gray.flatten()[:595]
             if len(features) < 595:
                 features = np.pad(features, (0, 595 - len(features)))
+            
             X_train_list.append(features.astype(np.float32))
             y_train_list.append(diagnosis)
+        
         except Exception as e:
-            print(f"    ⚠️  Error: {img_id}: {e}")
+            print(f"    ⚠️  Error processing {img_id}: {e}")
     
     X_train = np.array(X_train_list, dtype=np.float32)
     y_train = np.array(y_train_list)
-    print(f"  ✓ Loaded {len(X_train)} training images")
+    print(f"  ✓ Loaded {len(X_train)} training images with simple 595-dim pixel features")
     
     # Load test images
-    print("  Loading test images...")
+    print("  📷 Loading test images and extracting 595 pixel features...")
     X_test_list = []
     y_test_list = []
     
     for idx, row in test_csv.iterrows():
-        if idx % 500 == 0:
+        if idx % 100 == 0:
             print(f"    Processing {idx}/{len(test_csv)}...")
         
         img_id = row['id_code']
@@ -130,25 +129,32 @@ else:
             continue
         
         try:
+            # Read image
             img = cv2.imread(str(img_path))
             if img is None:
                 continue
-            img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-            img_resized = cv2.resize(img_gray, (256, 256))
-            features = img_resized.flatten()[:595]
+            
+            # Resize to 256×256
+            img_resized = cv2.resize(img, (256, 256))
+            img_gray = cv2.cvtColor(img_resized, cv2.COLOR_BGR2GRAY)
+            
+            # Extract SIMPLE pixel features (595 pixels)
+            features = img_gray.flatten()[:595]
             if len(features) < 595:
                 features = np.pad(features, (0, 595 - len(features)))
+            
             X_test_list.append(features.astype(np.float32))
             y_test_list.append(-1)  # Test set is unlabeled
+        
         except Exception as e:
-            print(f"    ⚠️  Error: {img_id}: {e}")
+            print(f"    ⚠️  Error processing {img_id}: {e}")
     
     X_test = np.array(X_test_list, dtype=np.float32)
     y_test = np.array(y_test_list)
-    print(f"  ✓ Loaded {len(X_test)} test images")
+    print(f"  ✓ Loaded {len(X_test)} test images with simple 595-dim pixel features")
     
     # Scale features
-    print("  Scaling features...")
+    print("\n  Scaling features using StandardScaler...")
     scaler = StandardScaler()
     X_train_scaled = scaler.fit_transform(X_train)
     X_test_scaled = scaler.transform(X_test)
@@ -161,8 +167,12 @@ else:
     np.save("data/y_test.npy", y_test)
     np.save("data/X_train_scaled.npy", X_train_scaled)
     np.save("data/X_test_scaled.npy", X_test_scaled)
-    joblib.dump(scaler, "data/scaler.pkl")
-    print("  ✓ Features extracted and saved")
+    
+    # Save scaler in models directory (for inference consistency)
+    os.makedirs("models", exist_ok=True)
+    joblib.dump(scaler, "models/scaler.pkl")
+    
+    print("  ✓ Features extracted, scaled, and saved")
 
 # Create directories
 os.makedirs("models", exist_ok=True)
@@ -170,82 +180,145 @@ os.makedirs("outputs/updated", exist_ok=True)
 
 CLASS_NAMES = ['Normal', 'Mild', 'Moderate', 'Severe', 'Proliferative']
 
-# Train models
+print("\n" + "="*70)
+print("TRAINING MODELS ON 595-DIMENSIONAL SIMPLE PIXEL FEATURES")
+print("="*70)
+
+# Use scaled data for consistent model behavior across all estimators.
+
 classifiers = {
-    "RandomForest": (RandomForestClassifier(n_estimators=100, random_state=42, class_weight="balanced", n_jobs=-1),
-                    X_train, X_train_scaled),
-    "SVM": (SVC(kernel="linear", probability=True, cache_size=2000, random_state=42, class_weight="balanced"),
-           X_train, X_train_scaled),
-    "GradientBoosting": (HistGradientBoostingClassifier(random_state=42),
-                        X_train, X_train_scaled),
+    "RandomForest": RandomForestClassifier(
+        n_estimators=100,
+        random_state=42,
+        class_weight="balanced",
+        n_jobs=-1
+    ),
+    "SVM": SVC(
+        kernel="linear",
+        probability=True,
+        cache_size=2000,
+        random_state=42,
+        class_weight="balanced"
+    ),
+    "GradientBoosting": HistGradientBoostingClassifier(
+        random_state=42
+    ),
 }
 
-print("\nTraining models on training set...")
+print("\n📊 Training individual models...")
 trained_models = {}
+test_results = {}
 
-for name, (clf, X_train_use, X_train_scaled_use) in classifiers.items():
-    print(f"  {name}...", end=" ")
+for name, clf in classifiers.items():
+    print(f"\n  [{name}]")
     
-    # Use scaled data for SVM and GB, unscaled for RF
-    if name == "RandomForest":
-        clf.fit(X_train, y_train)
-    else:
-        clf.fit(X_train_scaled, y_train)
-    
+    # Train all models on scaled features
+    print(f"    Training...", end=" ", flush=True)
+    clf.fit(X_train_scaled, y_train)
     trained_models[name] = clf
     joblib.dump(clf, f"models/{name.lower()}_model.pkl")
+    print("✓")
     
-    # Generate report on training data predictions (for validation)
-    if name == "RandomForest":
-        y_pred_train = clf.predict(X_train)
-    else:
-        y_pred_train = clf.predict(X_train_scaled)
+    # Evaluate on TRAINING set
+    y_pred_train = clf.predict(X_train_scaled)
+    accuracy_train = accuracy_score(y_train, y_pred_train)
     
-    accuracy = accuracy_score(y_train, y_pred_train)
+    # Evaluate on TEST set (important!)
+    y_pred_test = clf.predict(X_test_scaled)
+    accuracy_test = accuracy_score(y_test[y_test != -1], y_pred_test[y_test != -1]) if np.any(y_test != -1) else 0
     
+    print(f"    Train Accuracy: {accuracy_train:.4f}")
+    if accuracy_test > 0:
+        print(f"    Test Accuracy:  {accuracy_test:.4f}")
+    
+    # Generate detailed report
     report = classification_report(y_train, y_pred_train, target_names=CLASS_NAMES, zero_division=0)
     cm = confusion_matrix(y_train, y_pred_train)
     
     with open(f"outputs/updated/{name.lower()}_report.txt", "w") as f:
-        f.write(f"Classification Report for {name}:\n")
-        f.write("="*60 + "\n")
+        f.write(f"Classification Report for {name}\n")
+        f.write("="*70 + "\n")
+        f.write("Features: 595-dimensional (simple grayscale pixel vector)\n")
+        f.write(f"Training Samples: {len(X_train)}\n")
+        f.write(f"Training Accuracy: {accuracy_train:.4f}\n\n")
         f.write(report)
-        f.write("\n" + "="*60 + "\n")
-        f.write(f"Training Accuracy: {accuracy:.4f}\n")
-        f.write(f"\nConfusion Matrix:\n{np.array2string(cm)}\n")
+        f.write("\n" + "="*70 + "\n")
+        f.write(f"Confusion Matrix:\n{np.array2string(cm)}\n")
     
-    print(f"✓ (Accuracy: {accuracy:.4f})")
+    test_results[name] = (accuracy_train, accuracy_test if accuracy_test > 0 else None)
 
-# Train VotingClassifier
-print(f"  VotingClassifier...", end=" ")
+# Train VotingClassifier (ensemble of all 3 models)
+print(f"\n  [VotingClassifier - Ensemble]")
+print(f"    Creating ensemble...", end=" ", flush=True)
 
 voting_clf = VotingClassifier(
-    estimators=[('rf', trained_models['RandomForest']), 
-                ('svm', trained_models['SVM']), 
-                ('gb', trained_models['GradientBoosting'])],
-    voting='soft',
+    estimators=[
+        ('rf', trained_models['RandomForest']), 
+        ('svm', trained_models['SVM']), 
+        ('gb', trained_models['GradientBoosting'])
+    ],
+    voting='soft',      # Soft voting uses probability averages
     n_jobs=-1
 )
+
 voting_clf.fit(X_train_scaled, y_train)
-y_pred_voting = voting_clf.predict(X_train_scaled)
-
 joblib.dump(voting_clf, "models/votingclassifier_model.pkl")
+print("✓")
 
-accuracy_voting = accuracy_score(y_train, y_pred_voting)
-report_voting = classification_report(y_train, y_pred_voting, target_names=CLASS_NAMES, zero_division=0)
-cm_voting = confusion_matrix(y_train, y_pred_voting)
+# Evaluate VotingClassifier
+y_pred_voting_train = voting_clf.predict(X_train_scaled)
+accuracy_voting_train = accuracy_score(y_train, y_pred_voting_train)
+
+y_pred_voting_test = voting_clf.predict(X_test_scaled)
+accuracy_voting_test = accuracy_score(y_test[y_test != -1], y_pred_voting_test[y_test != -1]) if np.any(y_test != -1) else 0
+
+print(f"    Train Accuracy: {accuracy_voting_train:.4f}")
+if accuracy_voting_test > 0:
+    print(f"    Test Accuracy:  {accuracy_voting_test:.4f}")
+
+# Generate VotingClassifier report
+report_voting = classification_report(y_train, y_pred_voting_train, target_names=CLASS_NAMES, zero_division=0)
+cm_voting = confusion_matrix(y_train, y_pred_voting_train)
 
 with open("outputs/updated/votingclassifier_report.txt", "w") as f:
-    f.write(f"Classification Report for VotingClassifier:\n")
-    f.write("="*60 + "\n")
+    f.write(f"Classification Report for VotingClassifier (Ensemble)\n")
+    f.write("="*70 + "\n")
+    f.write("Features: 595-dimensional (simple grayscale pixel vector)\n")
+    f.write(f"Ensemble Method: Soft voting (probability averaging)\n")
+    f.write("Base Models: RandomForest, SVM (Linear), HistGradientBoosting\n")
+    f.write(f"Training Samples: {len(X_train)}\n")
+    f.write(f"Training Accuracy: {accuracy_voting_train:.4f}\n\n")
     f.write(report_voting)
-    f.write("\n" + "="*60 + "\n")
-    f.write(f"Training Accuracy: {accuracy_voting:.4f}\n")
-    f.write(f"\nConfusion Matrix:\n{np.array2string(cm_voting)}\n")
+    f.write("\n" + "="*70 + "\n")
+    f.write(f"Confusion Matrix:\n{np.array2string(cm_voting)}\n")
 
-print(f"✓ (Accuracy: {accuracy_voting:.4f})")
+print("\n" + "="*70)
+print("✅ TRAINING COMPLETE!")
+print("="*70)
 
-print("\n" + "="*60)
-print("✓ Training complete!")
-print("  Check: models/ and outputs/updated/")
-print("="*60 + "\n")
+# Summary
+print("\n📊 MODEL SUMMARY:")
+print(f"  Training samples: {len(X_train)}")
+print("  Feature dimensions: 595 (simple grayscale pixel vector)")
+print(f"  Classes: {len(CLASS_NAMES)} (0=Normal, 1=Mild, 2=Moderate, 3=Severe, 4=Proliferative)")
+
+print("\n📈 ACCURACY RESULTS:")
+for name, (acc_train, acc_test) in test_results.items():
+    print(f"  {name}:")
+    print(f"    Training: {acc_train:.4f}")
+    if acc_test is not None:
+        print(f"    Testing:  {acc_test:.4f}")
+
+print(f"  VotingClassifier (Ensemble):")
+print(f"    Training: {accuracy_voting_train:.4f}")
+if accuracy_voting_test > 0:
+    print(f"    Testing:  {accuracy_voting_test:.4f}")
+
+print("\n📁 SAVED FILES:")
+print(f"  Models:  models/[randomforest_model.pkl, svm_model.pkl, gradientboosting_model.pkl, votingclassifier_model.pkl]")
+print(f"  Scaler:  models/scaler.pkl")
+print(f"  Reports: outputs/updated/[*_report.txt]")
+print(f"  Features: data/[X_train.npy, X_test.npy, y_train.npy, y_test.npy, X_train_scaled.npy, X_test_scaled.npy]")
+
+print("\n✅ Ready for inference! Use inference.py to make predictions on new images.")
+print("="*70 + "\n")
